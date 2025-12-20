@@ -650,8 +650,8 @@ new class extends Component {
                             
                             <div class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
                                 <p class="font-medium">Bank BCA</p>
-                                <p class="font-mono text-lg">1234567890</p>
-                                <p>a.n. Nama Cafe</p>
+                                <p class="font-mono text-lg">6281580709</p>
+                                <p>a.n. Dimas Imadudin Satrianto</p>
                             </div>
                         </div>
 
