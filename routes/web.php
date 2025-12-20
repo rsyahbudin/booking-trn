@@ -15,9 +15,9 @@ Route::get('/', function () {
 // Public Booking Route
 Route::view('/booking', 'booking')->name('booking.form');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+Route::get('dashboard', function () {
+    return redirect()->route('admin.dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');

@@ -93,7 +93,7 @@
                         </a>
                     </div>
                 </div>
-                <div class="hidden lg:flex justify-center">
+                <!-- <div class="hidden lg:flex justify-center">
                     <div class="relative">
                         <div class="animate-float">
                             <div class="w-80 h-80 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center overflow-hidden">
@@ -101,7 +101,7 @@
                                 <img src="{{ asset('img/feature-icon.jpg') }}" alt="Feature Menu" class="w-full h-full object-cover">
                             </div>
                         </div>
-                        <div class="absolute -bottom-4 -right-4 bg-white rounded-2xl p-4 shadow-xl">
+                        <!-- <div class="absolute -bottom-4 -right-4 bg-white rounded-2xl p-4 shadow-xl">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -111,9 +111,9 @@
                                     <div class="text-sm text-zinc-500">Konfirmasi via WhatsApp</div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
-                </div>
+                </div> -->
             </div>
             
 
