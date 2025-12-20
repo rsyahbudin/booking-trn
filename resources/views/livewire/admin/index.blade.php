@@ -61,31 +61,32 @@ new class extends Component {
             <flux:subheading>Selamat datang di Admin Booking Buka Puasa</flux:subheading>
         </div>
 
-        <!-- Today Booking Status (shown after cutoff time) -->
-        @if ($isPastCutoff)
-            <x-card class="border-2 {{ $todayForceOpen ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-red-500 bg-red-50 dark:bg-red-900/20' }}">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 {{ $todayForceOpen ? 'bg-green-100 dark:bg-green-800' : 'bg-red-100 dark:bg-red-800' }} rounded-lg">
-                            <flux:icon.calendar-days class="size-8 {{ $todayForceOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}" />
-                        </div>
-                        <div>
-                            <flux:heading size="lg">Booking Hari Ini ({{ now()->translatedFormat('d F Y') }})</flux:heading>
-                            <p class="text-sm {{ $todayForceOpen ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300' }}">
-                                @if ($todayForceOpen)
-                                    ✅ Booking DIBUKA (force open oleh admin)
-                                @else
-                                    ❌ Booking DITUTUP (sudah lewat jam {{ config('booking.cutoff_hour', 15) }}:00)
-                                @endif
-                            </p>
-                        </div>
+        <!-- Today Booking Control -->
+        <x-card class="border-2 {{ $todayForceOpen ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' }}">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 {{ $todayForceOpen ? 'bg-green-100 dark:bg-green-800' : 'bg-orange-100 dark:bg-orange-800' }} rounded-lg">
+                        <flux:icon.calendar-days class="size-8 {{ $todayForceOpen ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400' }}" />
                     </div>
-                    <flux:button wire:click="toggleTodayBooking" variant="{{ $todayForceOpen ? 'danger' : 'primary' }}">
-                        {{ $todayForceOpen ? 'Tutup Booking' : 'Buka Booking' }}
-                    </flux:button>
+                    <div>
+                        <flux:heading size="lg">Booking Hari Ini ({{ now()->translatedFormat('d F Y') }})</flux:heading>
+                        <p class="text-sm {{ $todayForceOpen ? 'text-green-700 dark:text-green-300' : 'text-orange-700 dark:text-orange-300' }}">
+                            @if ($todayForceOpen)
+                                ✅ Booking untuk hari ini DIBUKA
+                            @else
+                                ⚠️ Booking untuk hari ini DITUTUP
+                            @endif
+                            @if ($isPastCutoff)
+                                <span class="text-xs">(sudah lewat jam {{ config('booking.cutoff_hour', 15) }}:00)</span>
+                            @endif
+                        </p>
+                    </div>
                 </div>
-            </x-card>
-        @endif
+                <flux:button wire:click="toggleTodayBooking" variant="{{ $todayForceOpen ? 'danger' : 'primary' }}">
+                    {{ $todayForceOpen ? 'Tutup Booking Hari Ini' : 'Buka Booking Hari Ini' }}
+                </flux:button>
+            </div>
+        </x-card>
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

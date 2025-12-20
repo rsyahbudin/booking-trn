@@ -38,11 +38,17 @@ Route::middleware(['auth'])->group(function () {
         ->name('two-factor.show');
 });
 
-// Admin Routes
+// Admin Routes - Accessible by all authenticated users (admin & karyawan)
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
-    // Dashboard
+    // Dashboard - accessible by all roles
     Route::view('/', 'admin.index')->name('dashboard');
+    
+    // Daftar Pesanan - accessible by all roles
+    Route::view('/bookings/orders', 'admin.bookings.orders')->name('bookings.orders');
+});
 
+// Admin-only Routes - Only accessible by admin role
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Categories
     Route::view('/categories', 'admin.categories.index')->name('categories.index');
     Route::view('/categories/create', 'admin.categories.create')->name('categories.create');
@@ -53,7 +59,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::view('/menus/create', 'admin.menus.create')->name('menus.create');
     Route::get('/menus/{menu}/edit', fn(Menu $menu) => view('admin.menus.edit', compact('menu')))->name('menus.edit');
 
-    // Bookings
+    // Bookings (admin only - full access)
     Route::view('/bookings', 'admin.bookings.index')->name('bookings.index');
     Route::get('/bookings/{booking}', fn(Booking $booking) => view('admin.bookings.show', compact('booking')))->name('bookings.show');
     Route::get('/bookings/{booking}/edit', fn(Booking $booking) => view('admin.bookings.edit', compact('booking')))->name('bookings.edit');

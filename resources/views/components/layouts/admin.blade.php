@@ -25,21 +25,27 @@
                 Dashboard
             </flux:navlist.item>
 
-            <flux:navlist.item icon="calendar-days" href="{{ route('admin.bookings.index') }}" :current="request()->routeIs('admin.bookings.*')">
-                Booking
+            <flux:navlist.item icon="clipboard-document-check" href="{{ route('admin.bookings.orders') }}" :current="request()->routeIs('admin.bookings.orders')">
+                Daftar Pesanan
             </flux:navlist.item>
 
-            <flux:navlist.item icon="rectangle-stack" href="{{ route('admin.categories.index') }}" :current="request()->routeIs('admin.categories.*')">
-                Kategori
-            </flux:navlist.item>
+            @if (Auth::user()->isAdmin())
+                <flux:navlist.item icon="calendar-days" href="{{ route('admin.bookings.index') }}" :current="request()->routeIs('admin.bookings.index')">
+                    Booking
+                </flux:navlist.item>
 
-            <flux:navlist.item icon="clipboard-document-list" href="{{ route('admin.menus.index') }}" :current="request()->routeIs('admin.menus.*')">
-                Menu
-            </flux:navlist.item>
+                <flux:navlist.item icon="rectangle-stack" href="{{ route('admin.categories.index') }}" :current="request()->routeIs('admin.categories.*')">
+                    Kategori
+                </flux:navlist.item>
 
-            <flux:navlist.item icon="map-pin" href="{{ route('admin.seating-spots.index') }}" :current="request()->routeIs('admin.seating-spots.*')">
-                Spot Duduk
-            </flux:navlist.item>
+                <flux:navlist.item icon="clipboard-document-list" href="{{ route('admin.menus.index') }}" :current="request()->routeIs('admin.menus.*')">
+                    Menu
+                </flux:navlist.item>
+
+                <flux:navlist.item icon="map-pin" href="{{ route('admin.seating-spots.index') }}" :current="request()->routeIs('admin.seating-spots.*')">
+                    Spot Duduk
+                </flux:navlist.item>
+            @endif
         </flux:navlist>
 
         <flux:spacer />

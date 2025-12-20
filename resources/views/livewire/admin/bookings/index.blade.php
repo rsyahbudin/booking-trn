@@ -58,16 +58,22 @@ new class extends Component {
 
     public function with(): array
     {
+        $query = Booking::query()
+            ->with('seatingSpot', 'items.menu')
+            ->when($this->search, fn($q) => $q->where('customer_name', 'like', "%{$this->search}%")
+                ->orWhere('booking_code', 'like', "%{$this->search}%")
+                ->orWhere('whatsapp', 'like', "%{$this->search}%"))
+            ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
+            ->when($this->dateFilter, fn($q) => $q->whereDate('booking_date', $this->dateFilter));
+
+        // Calculate total pax for filtered results
+        $totalPax = (clone $query)->sum('guest_count');
+        $totalBookingsFiltered = (clone $query)->count();
+
         return [
-            'bookings' => Booking::query()
-                ->with('seatingSpot', 'items.menu')
-                ->when($this->search, fn($q) => $q->where('customer_name', 'like', "%{$this->search}%")
-                    ->orWhere('booking_code', 'like', "%{$this->search}%")
-                    ->orWhere('whatsapp', 'like', "%{$this->search}%"))
-                ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
-                ->when($this->dateFilter, fn($q) => $q->whereDate('booking_date', $this->dateFilter))
-                ->latest()
-                ->paginate(10),
+            'bookings' => $query->latest()->paginate(10),
+            'totalPax' => $totalPax,
+            'totalBookingsFiltered' => $totalBookingsFiltered,
         ];
     }
 }; ?>
@@ -104,6 +110,29 @@ new class extends Component {
                     <flux:input wire:model.live="dateFilter" type="date" />
                 </div>
             </div>
+
+            <!-- Filter Stats -->
+            @if ($dateFilter || $statusFilter || $search)
+                <div class="flex flex-wrap gap-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <div class="flex items-center gap-2">
+                        <span class="text-amber-700 dark:text-amber-300 font-medium">📊 Hasil Filter:</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Total Booking:</span>
+                        <span class="font-bold text-amber-700 dark:text-amber-300">{{ $totalBookingsFiltered }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Total Pax:</span>
+                        <span class="font-bold text-amber-700 dark:text-amber-300">{{ $totalPax }} orang</span>
+                    </div>
+                    @if ($dateFilter)
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-zinc-600 dark:text-zinc-400">Tanggal:</span>
+                            <span class="font-medium text-zinc-800 dark:text-zinc-200">{{ \Carbon\Carbon::parse($dateFilter)->format('d M Y') }}</span>
+                        </div>
+                    @endif
+                </div>
+            @endif
 
             <!-- Export Section -->
             <div class="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg mb-4">

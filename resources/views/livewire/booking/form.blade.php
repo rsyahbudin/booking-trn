@@ -370,12 +370,7 @@ new class extends Component {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tanggal Booking *</label>
-                                <select wire:model="booking_date" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                                    <option value="">Pilih Tanggal</option>
-                                    @foreach ($availableDates as $date)
-                                        <option value="{{ $date }}">{{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F Y') }}</option>
-                                    @endforeach
-                                </select>
+                                <input type="date" wire:model="booking_date" min="{{ date('Y-m-d') }}" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                                 @error('booking_date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                             <div>
