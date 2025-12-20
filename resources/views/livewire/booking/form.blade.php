@@ -240,7 +240,8 @@ new class extends Component {
 
         // Generate WhatsApp message
         $message = $this->generateWhatsAppMessage($booking);
-        $waNumber = '6281804040684';
+        $waNumber = '6285813035292';
+        
         $waUrl = 'https://wa.me/' . $waNumber . '?text=' . urlencode($message);
 
         session()->flash('booking_success', [
