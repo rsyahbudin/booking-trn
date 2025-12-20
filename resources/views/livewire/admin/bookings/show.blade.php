@@ -11,10 +11,48 @@ new class extends Component {
         $this->booking = $booking->load('seatingSpot', 'items.menu');
     }
 
-    public function updateStatus(string $status): void
+    public bool $showConfirmModal = false;
+    public string $paymentStatus = 'dp';
+    public string $paidAmount = '';
+
+    public function updatedPaymentStatus($value): void
     {
-        $this->booking->update(['status' => $status]);
-        session()->flash('message', 'Status booking berhasil diperbarui!');
+        if ($value === 'lunas') {
+            $this->paidAmount = number_format($this->booking->total_amount, 0, '', '');
+        } else {
+            $this->paidAmount = number_format($this->booking->dp_amount, 0, '', '');
+        }
+    }
+
+    public function openConfirmModal(): void
+    {
+        $this->paymentStatus = 'dp';
+        $this->paidAmount = number_format($this->booking->dp_amount, 0, '', '');
+        $this->showConfirmModal = true;
+    }
+
+    public function closeConfirmModal(): void
+    {
+        $this->showConfirmModal = false;
+        $this->paymentStatus = 'dp';
+        $this->paidAmount = '';
+    }
+
+    public function confirmBooking(): void
+    {
+        $this->validate([
+            'paymentStatus' => 'required|in:dp,lunas',
+            'paidAmount' => 'required|numeric|min:0',
+        ]);
+
+        $this->booking->update([
+            'status' => 'confirmed',
+            'payment_status' => $this->paymentStatus,
+            'paid_amount' => $this->paidAmount,
+        ]);
+
+        $this->closeConfirmModal();
+        session()->flash('message', 'Booking berhasil dikonfirmasi!');
     }
 }; ?>
 
@@ -138,7 +176,7 @@ new class extends Component {
 
                     @if ($booking->status === 'pending')
                         <div class="pt-4 border-t border-zinc-200 dark:border-zinc-700 space-y-2">
-                            <flux:button wire:click="updateStatus('confirmed')" variant="primary" class="w-full" icon="check">
+                            <flux:button wire:click="openConfirmModal" variant="primary" class="w-full" icon="check">
                                 Konfirmasi Booking
                             </flux:button>
                             <flux:button wire:click="updateStatus('cancelled')" wire:confirm="Yakin ingin membatalkan?" variant="danger" class="w-full" icon="x-mark">
@@ -184,4 +222,62 @@ new class extends Component {
             </div>
         </x-card>
     </div>
+    <!-- Confirmation Modal -->
+    @if ($showConfirmModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-black/50" wire:click="closeConfirmModal"></div>
+            <div class="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-zinc-800 dark:text-white">Konfirmasi Booking</h3>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">Pilih status pembayaran dan nominal yang dibayar</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Status Pembayaran *</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition {{ $paymentStatus === 'dp' ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-zinc-200 dark:border-zinc-700' }}">
+                                    <input type="radio" wire:model.live="paymentStatus" value="dp" class="text-amber-500 focus:ring-amber-500">
+                                    <div>
+                                        <div class="font-semibold text-zinc-800 dark:text-white">DP</div>
+                                        <div class="text-xs text-zinc-500">Uang Muka 50%</div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition {{ $paymentStatus === 'lunas' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-zinc-200 dark:border-zinc-700' }}">
+                                    <input type="radio" wire:model.live="paymentStatus" value="lunas" class="text-green-500 focus:ring-green-500">
+                                    <div>
+                                        <div class="font-semibold text-zinc-800 dark:text-white">LUNAS</div>
+                                        <div class="text-xs text-zinc-500">Pembayaran Penuh</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Nominal yang Ditransfer (Rp) *</label>
+                            <input type="number" wire:model="paidAmount" placeholder="Contoh: 150000" class="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-xl bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            @error('paidAmount') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <button wire:click="closeConfirmModal" class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition">
+                            Batal
+                        </button>
+                        <button wire:click="confirmBooking" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-medium">
+                            ✓ Konfirmasi Booking
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

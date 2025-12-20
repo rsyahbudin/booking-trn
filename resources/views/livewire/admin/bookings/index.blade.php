@@ -24,6 +24,20 @@ new class extends Component {
     public string $paymentStatus = 'dp';
     public string $paidAmount = '';
 
+    public function updatedPaymentStatus($value): void
+    {
+        if ($this->confirmingBookingId) {
+            $booking = Booking::find($this->confirmingBookingId);
+            if ($booking) {
+                if ($value === 'lunas') {
+                    $this->paidAmount = number_format($booking->total_amount, 0, '', '');
+                } else {
+                    $this->paidAmount = number_format($booking->dp_amount, 0, '', '');
+                }
+            }
+        }
+    }
+
     public function openConfirmModal(int $id): void
     {
         $booking = Booking::findOrFail($id);
