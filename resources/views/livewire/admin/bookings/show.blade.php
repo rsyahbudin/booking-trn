@@ -101,6 +101,32 @@ new class extends Component {
                         <p class="text-lg font-medium text-green-600">Rp {{ number_format($booking->dp_amount, 0, ',', '.') }}</p>
                     </div>
 
+                    @if ($booking->payment_status)
+                        <div class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                            <flux:subheading class="mb-2">Info Pembayaran</flux:subheading>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="text-sm text-zinc-500">Status Pembayaran</div>
+                                    <flux:badge :color="$booking->payment_status === 'lunas' ? 'green' : 'yellow'">
+                                        {{ $booking->payment_status === 'lunas' ? 'LUNAS' : 'DP' }}
+                                    </flux:badge>
+                                </div>
+                                @if ($booking->paid_amount)
+                                    <div>
+                                        <div class="text-sm text-zinc-500">Nominal Dibayar</div>
+                                        <div class="font-bold text-green-600">Rp {{ number_format($booking->paid_amount, 0, ',', '.') }}</div>
+                                    </div>
+                                    @if ($booking->payment_status === 'dp')
+                                        <div>
+                                            <div class="text-sm text-zinc-500">Sisa Pembayaran</div>
+                                            <div class="font-bold text-red-500">Rp {{ number_format($booking->total_amount - $booking->paid_amount, 0, ',', '.') }}</div>
+                                        </div>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     @if ($booking->payment_proof)
                         <div>
                             <flux:subheading>Bukti Pembayaran</flux:subheading>

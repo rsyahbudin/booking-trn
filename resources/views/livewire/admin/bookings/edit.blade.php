@@ -17,6 +17,8 @@ new class extends Component {
     public string $seating_spot_id = '';
     public string $status = '';
     public string $notes = '';
+    public string $payment_status = '';
+    public string $paid_amount = '';
     
     // Menu items management
     public array $items = [];
@@ -35,6 +37,8 @@ new class extends Component {
         $this->seating_spot_id = $booking->seating_spot_id;
         $this->status = $booking->status;
         $this->notes = $booking->notes ?? '';
+        $this->payment_status = $booking->payment_status ?? '';
+        $this->paid_amount = $booking->paid_amount ? number_format($booking->paid_amount, 0, '', '') : '';
         
         // Load existing items
         foreach ($booking->items as $item) {
@@ -145,7 +149,20 @@ new class extends Component {
             'seating_spot_id' => 'required|exists:seating_spots,id',
             'status' => 'required|in:pending,confirmed,cancelled',
             'notes' => 'nullable|string',
+            'payment_status' => 'nullable|in:dp,lunas',
+            'paid_amount' => 'nullable|numeric|min:0',
         ]);
+        
+        // Handle paid_amount format
+        if (!empty($this->paid_amount)) {
+            $validated['paid_amount'] = (float) str_replace(['.', ','], '', $this->paid_amount);
+        } else {
+            $validated['paid_amount'] = null;
+        }
+
+        if (empty($this->payment_status)) {
+            $validated['payment_status'] = null;
+        }
 
         // Update booking details
         $this->booking->update($validated);
@@ -240,6 +257,15 @@ new class extends Component {
                     
                     <flux:textarea wire:model="notes" label="Catatan" rows="2" />
 
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:select wire:model="payment_status" label="Status Pembayaran">
+                            <option value="">-- Pilih Status --</option>
+                            <option value="dp">DP (Uang Muka)</option>
+                            <option value="lunas">LUNAS</option>
+                        </flux:select>
+                        
+                        <flux:input wire:model="paid_amount" label="Nominal Dibayar (Rp)" type="number" />
+                    </div>
                     <div class="flex gap-3 pt-4">
                         <flux:button type="submit" variant="primary">Simpan Perubahan</flux:button>
                         <flux:button href="{{ route('admin.bookings.show', $booking) }}" variant="ghost">Batal</flux:button>

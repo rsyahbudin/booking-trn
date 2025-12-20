@@ -23,6 +23,9 @@ class Booking extends Model
         'dp_amount',
         'payment_proof',
         'status',
+        'payment_status',
+        'paid_amount',
+        'confirmed_at',
         'notes',
     ];
 
@@ -32,6 +35,8 @@ class Booking extends Model
         'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'dp_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'confirmed_at' => 'datetime',
     ];
 
     protected static function boot()

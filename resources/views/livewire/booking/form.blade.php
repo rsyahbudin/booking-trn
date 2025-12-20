@@ -122,6 +122,16 @@ new class extends Component {
         
         if (!$menu) return;
 
+        // Validate required variants
+        foreach ($menu->variants as $variant) {
+            if ($variant->is_required) {
+                if (!isset($this->selectedOptions[$menuId][$variant->id]) || empty($this->selectedOptions[$menuId][$variant->id])) {
+                    session()->flash('variant_error_' . $menuId, 'Pilih ' . $variant->name . ' terlebih dahulu (wajib)');
+                    return;
+                }
+            }
+        }
+
         $cartKey = $menuId . '_' . md5(json_encode($this->selectedOptions[$menuId] ?? []));
         
         if (isset($this->cart[$cartKey])) {
@@ -482,10 +492,14 @@ new class extends Component {
                                                     <div class="mt-4 space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
                                                         @foreach ($menu->variants as $variant)
                                                             <div>
-                                                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                                                    {{ $variant->name }} @if($variant->is_required) * @endif
+                                                                <label class="block text-sm font-medium mb-2 {{ $variant->is_required ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-600 dark:text-zinc-400' }}">
+                                                                    {{ $variant->name }}
+                                                                    @if($variant->is_required)
+                                                                        <span class="text-red-500 font-bold">*</span>
+                                                                        <span class="text-xs text-red-500">(wajib)</span>
+                                                                    @endif
                                                                 </label>
-                                                                <select wire:model="selectedOptions.{{ $menu->id }}.{{ $variant->id }}" class="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-sm">
+                                                                <select wire:model="selectedOptions.{{ $menu->id }}.{{ $variant->id }}" class="w-full px-3 py-2 rounded-lg border {{ $variant->is_required ? 'border-amber-400 dark:border-amber-600' : 'border-zinc-300 dark:border-zinc-600' }} bg-white dark:bg-zinc-700 text-sm">
                                                                     <option value="">Pilih {{ $variant->name }}</option>
                                                                     @foreach ($variant->options as $option)
                                                                         <option value="{{ $option->id }}">
@@ -498,6 +512,15 @@ new class extends Component {
                                                                 </select>
                                                             </div>
                                                         @endforeach
+                                                    </div>
+                                                @endif
+
+                                                @if (session('variant_error_' . $menu->id))
+                                                    <div class="mt-3 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                                                        <p class="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+                                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                                                            {{ session('variant_error_' . $menu->id) }}
+                                                        </p>
                                                     </div>
                                                 @endif
 

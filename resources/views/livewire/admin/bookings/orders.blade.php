@@ -144,9 +144,24 @@ new class extends Component {
                                     <div class="text-amber-600 dark:text-amber-400">📝 {{ $booking->notes }}</div>
                                 @endif
                             </div>
-                            <div class="mt-2">
+                            <div class="mt-2 flex flex-wrap gap-2">
                                 <flux:badge :color="$booking->status_color">{{ $booking->status_label }}</flux:badge>
+                                @if ($booking->payment_status)
+                                    <flux:badge :color="$booking->payment_status === 'lunas' ? 'green' : 'yellow'">
+                                        {{ $booking->payment_status === 'lunas' ? 'LUNAS' : 'DP' }}
+                                    </flux:badge>
+                                @endif
                             </div>
+                            @if ($booking->paid_amount)
+                                <div class="mt-1 text-sm text-green-600 dark:text-green-400">
+                                    💰 Dibayar: Rp {{ number_format($booking->paid_amount, 0, ',', '.') }}
+                                </div>
+                                @if ($booking->payment_status === 'dp')
+                                    <div class="mt-1 text-sm text-red-500">
+                                        ⚠️ Sisa: Rp {{ number_format($booking->total_amount - $booking->paid_amount, 0, ',', '.') }}
+                                    </div>
+                                @endif
+                            @endif
                         </div>
 
                         <!-- Menu Items -->
