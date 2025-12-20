@@ -215,9 +215,19 @@ new class extends Component {
             </x-table>
 
             <div class="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-end">
-                <div class="text-right">
-                    <p class="text-zinc-600 dark:text-zinc-400">Total</p>
-                    <p class="text-2xl font-bold">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</p>
+                <div class="text-right space-y-1">
+                    <div class="flex justify-between md:justify-end gap-8 text-sm text-zinc-600 dark:text-zinc-400">
+                        <span>Subtotal</span>
+                        <span>Rp {{ number_format($booking->subtotal_amount, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between md:justify-end gap-8 text-sm text-zinc-600 dark:text-zinc-400">
+                        <span>PPN (10%)</span>
+                        <span>Rp {{ number_format($booking->tax_amount, 0, ',', '.') }}</span>
+                    </div>
+                    <div>
+                        <p class="text-zinc-600 dark:text-zinc-400 mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">Total</p>
+                        <p class="text-2xl font-bold">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</p>
+                    </div>
                 </div>
             </div>
         </x-card>
