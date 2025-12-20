@@ -77,7 +77,7 @@ new class extends Component {
         if ($this->step === 1) {
             $this->validate([
                 'customer_name' => 'required|string|max:255',
-                'booking_date' => 'required|date',
+                'booking_date' => 'required|date|after_or_equal:today',
                 'guest_count' => 'required|integer|min:1',
                 'whatsapp' => 'required|string|max:20',
                 'instagram' => 'nullable|string|max:255',
@@ -279,7 +279,7 @@ new class extends Component {
         $message .= "*Total: Rp " . number_format($this->totalAmount, 0, ',', '.') . "*\n";
         $message .= "*DP (50%): Rp " . number_format($this->dpAmount, 0, ',', '.') . "*\n\n";
         
-        $message .= "📎 Bukti Transfer: " . url('storage/' . $booking->payment_proof) . "\n\n";
+        $message .= "Bukti Transfer: " . url('storage/' . $booking->payment_proof) . "\n\n";
         
         if ($this->notes) {
             $message .= "*Catatan:* {$this->notes}\n\n";
@@ -303,12 +303,19 @@ new class extends Component {
 
 <div class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900">
     <!-- Header -->
-    <header class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-amber-200 dark:border-zinc-700 sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-            <a href="{{ route('home') }}" class="flex items-center gap-2">
-                <span class="text-2xl">🌙</span>
-                <span class="font-bold text-xl text-amber-800 dark:text-amber-400">Booking Buka Puasa di Teras Rumah Nenek</span>
-            </a>
+    <header class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-b border-white/20 dark:border-zinc-800 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3">
+            <div class="flex flex-col items-center justify-center text-center">
+                <a href="{{ route('home') }}" class="flex items-center gap-3 group hover:opacity-80 transition">
+                    {{-- Logo Adaptif --}}
+                    <img src="{{ asset('img/logo-black.png') }}" alt="Logo" class="h-12 w-auto object-contain block dark:hidden">
+                    <img src="{{ asset('img/logo-white.png') }}" alt="Logo" class="h-12 w-auto object-contain hidden dark:block">
+                    <div class="text-left">
+                        <span class="block text-xs font-medium text-amber-600 dark:text-amber-400 tracking-wider uppercase">Booking Online</span>
+                        <span class="font-bold text-lg leading-tight text-zinc-800 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">Teras Rumah Nenek</span>
+                    </div>
+                </a>
+            </div>
         </div>
     </header>
 
