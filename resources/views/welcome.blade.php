@@ -363,7 +363,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-bold mb-4">Jam Operasional</h4>
+                    <h4 class="font-bold mb-4">Operasional Ramadhan</h4>
                     <ul class="space-y-2 text-zinc-400">
                         <li>Senin - Minggu: 16:00 - 23:00</li>
                     </ul>
