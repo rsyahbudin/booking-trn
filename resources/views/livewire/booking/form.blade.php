@@ -255,9 +255,9 @@ new class extends Component {
     {
         $spot = SeatingSpot::find($this->seating_spot_id);
         
-        $message = "🌙 *BOOKING BUKA PUASA BERSAMA*\n\n";
-        $message .= "📋 *Kode Booking:* {$booking->booking_code}\n\n";
-        $message .= "👤 *Data Pelanggan:*\n";
+        $message = "*BOOKING BUKA PUASA DI TERAS RUMAH NENEK*\n\n";
+        $message .= "*Kode Booking:* {$booking->booking_code}\n\n";
+        $message .= "*Data Pelanggan:*\n";
         $message .= "Nama: {$this->customer_name}\n";
         $message .= "Tanggal: " . date('d F Y', strtotime($this->booking_date)) . "\n";
         $message .= "Jumlah Tamu: {$this->guest_count} orang\n";
@@ -267,13 +267,13 @@ new class extends Component {
         }
         $message .= "Spot: {$spot->name}\n\n";
         
-        $message .= "🍽️ *Pesanan:*\n";
+        $message .= "*Pesanan:*\n";
         foreach ($this->cart as $item) {
             $options = !empty($item['options']) ? ' (' . implode(', ', $item['options']) . ')' : '';
             $message .= "• {$item['name']}{$options} x{$item['quantity']} = Rp " . number_format($item['price'] * $item['quantity'], 0, ',', '.') . "\n";
         }
         
-        $message .= "\n💰 *Rincian Pembayaran:*\n";
+        $message .= "\n*Rincian Pembayaran:*\n";
         $message .= "Subtotal: Rp " . number_format($this->subtotalAmount, 0, ',', '.') . "\n";
         $message .= "PPN (10%): Rp " . number_format($this->taxAmount, 0, ',', '.') . "\n";
         $message .= "*Total: Rp " . number_format($this->totalAmount, 0, ',', '.') . "*\n";
@@ -282,10 +282,10 @@ new class extends Component {
         $message .= "📎 Bukti Transfer: " . url('storage/' . $booking->payment_proof) . "\n\n";
         
         if ($this->notes) {
-            $message .= "📝 *Catatan:* {$this->notes}\n\n";
+            $message .= "*Catatan:* {$this->notes}\n\n";
         }
         
-        $message .= "Mohon konfirmasi booking ini. Terima kasih! 🙏";
+        $message .= "Mohon konfirmasi booking ini. Terima kasih!";
         
         return $message;
     }
@@ -307,7 +307,7 @@ new class extends Component {
         <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
             <a href="{{ route('home') }}" class="flex items-center gap-2">
                 <span class="text-2xl">🌙</span>
-                <span class="font-bold text-xl text-amber-800 dark:text-amber-400">Booking Buka Puasa</span>
+                <span class="font-bold text-xl text-amber-800 dark:text-amber-400">Booking Buka Puasa di Teras Rumah Nenek</span>
             </a>
         </div>
     </header>
@@ -368,7 +368,7 @@ new class extends Component {
             <!-- Step 1: Customer Data -->
             @if ($step === 1)
                 <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 md:p-8">
-                    <h2 class="text-2xl font-bold text-zinc-800 dark:text-white mb-6">📋 Data Diri</h2>
+                    <h2 class="text-2xl font-bold text-zinc-800 dark:text-white mb-6">Data Diri</h2>
                     
                     <div class="space-y-5">
                         <div>
@@ -461,7 +461,7 @@ new class extends Component {
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Menu List -->
                     <div class="lg:col-span-2 space-y-6">
-                        <h2 class="text-2xl font-bold text-zinc-800 dark:text-white">🍽️ Pilih Menu</h2>
+                        <h2 class="text-2xl font-bold text-zinc-800 dark:text-white">Pilih Menu</h2>
                         
                         @foreach ($categories as $category)
                             @if ($category->activeMenus->count() > 0)
@@ -539,7 +539,7 @@ new class extends Component {
                     <!-- Cart -->
                     <div class="lg:col-span-1">
                         <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 sticky top-24">
-                            <h3 class="text-lg font-bold text-zinc-800 dark:text-white mb-4">🛒 Pesanan Anda</h3>
+                            <h3 class="text-lg font-bold text-zinc-800 dark:text-white mb-4">Pesanan Anda</h3>
                             
                             @if (empty($cart))
                                 <p class="text-zinc-500 dark:text-zinc-400 text-center py-8">Belum ada menu dipilih</p>
@@ -592,7 +592,7 @@ new class extends Component {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Order Summary -->
                     <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6">
-                        <h2 class="text-xl font-bold text-zinc-800 dark:text-white mb-4">📋 Ringkasan Pesanan</h2>
+                        <h2 class="text-xl font-bold text-zinc-800 dark:text-white mb-4">Ringkasan Pesanan</h2>
                         
                         <div class="space-y-3 mb-6">
                             @foreach ($cart as $item)
@@ -630,18 +630,23 @@ new class extends Component {
 
                     <!-- Payment Form -->
                     <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6">
-                        <h2 class="text-xl font-bold text-zinc-800 dark:text-white mb-4">💳 Pembayaran</h2>
+                        <h2 class="text-xl font-bold text-zinc-800 dark:text-white mb-4">Pembayaran</h2>
                         
                         <div class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-center">
                             <p class="text-sm text-amber-800 dark:text-amber-300 mb-3">Scan QR Code atau transfer ke rekening berikut:</p>
                             
                             <!-- QR Code Placeholder -->
-                            <div class="w-48 h-48 bg-white rounded-xl mx-auto flex items-center justify-center border-2 border-dashed border-amber-300 dark:border-amber-600">
-                                <div class="text-center">
-                                    <span class="text-4xl">📱</span>
-                                    <p class="text-xs text-zinc-500 mt-2">QR Code akan ditampilkan di sini</p>
-                                </div>
+                            <div class="w-48 h-auto bg-white rounded-xl mx-auto border-2 border-amber-300 dark:border-amber-600 overflow-hidden p-2">
+                                {{-- Ganti 'qris.jpg' dengan nama file gambar QRIS Anda. Simpan gambar di folder public/img/ --}}
+                                <img src="{{ asset('img/qris.jpeg') }}" alt="QRIS Payment" class="w-full h-full object-contain">
                             </div>
+                            
+                            <a href="{{ asset('img/qris.jpeg') }}" download="qris-payment.jpeg" class="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                Download QRIS
+                            </a>
                             
                             <div class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
                                 <p class="font-medium">Bank BCA</p>

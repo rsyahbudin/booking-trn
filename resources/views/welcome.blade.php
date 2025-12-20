@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Booking Buka Puasa Bersama</title>
+    <title>Buka Puasa di Teras Rumah Nenek</title>
     <meta name="description" content="Reservasi buka puasa bersama di cafe kami. Nikmati berbagai menu lezat untuk berbuka puasa bersama keluarga dan teman.">
 
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -65,7 +65,7 @@
                 <div class="text-white">
                     <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
                         <span class="text-xl">🌙</span>
-                        <span class="text-sm font-medium">Ramadhan 1446 H</span>
+                        <span class="text-sm font-medium">Ramadhan 1447 H</span>
                     </div>
                     <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
                         Buka Puasa<br>
