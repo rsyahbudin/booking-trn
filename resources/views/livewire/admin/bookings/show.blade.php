@@ -177,15 +177,15 @@ new class extends Component {
                     @if ($booking->status === 'confirmed')
                         <div class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                             @php
-                                $confirmMessage = "Halo {$booking->customer_name}! 👋\n\n";
-                                $confirmMessage .= "Booking Anda telah *DIKONFIRMASI* ✅\n\n";
-                                $confirmMessage .= "📋 *Detail Booking:*\n";
+                                $confirmMessage = "Halo {$booking->customer_name}!\n\n";
+                                $confirmMessage .= "Booking Anda telah *DIKONFIRMASI* \n\n";
+                                $confirmMessage .= "*Detail Booking:*\n";
                                 $confirmMessage .= "Kode: {$booking->booking_code}\n";
                                 $confirmMessage .= "Tanggal: " . $booking->booking_date->format('d F Y') . "\n";
                                 $confirmMessage .= "Spot: {$booking->seatingSpot->name}\n\n";
                                 
                                 // Menu items
-                                $confirmMessage .= "🍽️ *Pesanan:*\n";
+                                $confirmMessage .= "*Pesanan:*\n";
                                 foreach ($booking->items as $item) {
                                     $confirmMessage .= "• {$item->menu->name}";
                                     if ($item->selected_options_text) {
@@ -196,13 +196,13 @@ new class extends Component {
                                 $confirmMessage .= "\n";
                                 
                                 // Payment info
-                                $confirmMessage .= "💰 *Pembayaran:*\n";
+                                $confirmMessage .= "*Pembayaran:*\n";
                                 $confirmMessage .= "Total: Rp " . number_format($booking->total_amount, 0, ',', '.') . "\n";
                                 $confirmMessage .= "Dibayar: Rp " . number_format($booking->paid_amount, 0, ',', '.') . "\n";
                                 if ($booking->payment_status === 'dp') {
                                     $confirmMessage .= "Sisa: Rp " . number_format($booking->total_amount - $booking->paid_amount, 0, ',', '.') . "\n";
                                 }
-                                $confirmMessage .= "\nSampai jumpa di Teras Rumah Nenek! 🙏";
+                                $confirmMessage .= "\nSampai jumpa di Teras Rumah Nenek! ";
                                 $waUrl = "https://wa.me/{$booking->whatsapp}?text=" . urlencode($confirmMessage);
                             @endphp
                             <a href="{{ $waUrl }}" target="_blank" class="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg font-medium transition">
