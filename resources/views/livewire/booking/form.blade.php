@@ -471,12 +471,31 @@ new class extends Component {
             @if ($step === 2)
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Menu List -->
-                    <div class="lg:col-span-2 space-y-6">
+                    <div class="lg:col-span-2 space-y-6" x-data="{ activeCategory: '{{ $categories->first()?->id }}' }">
                         <h2 class="text-2xl font-bold text-zinc-800 dark:text-white">Pilih Menu</h2>
                         
+                        <!-- Category Tabs -->
+                        <div class="flex flex-wrap gap-2 sticky top-20 z-30 bg-gradient-to-b from-zinc-100 dark:from-zinc-900 to-transparent pb-4 pt-2 -mx-4 px-4">
+                            @foreach ($categories as $category)
+                                @if ($category->activeMenus->count() > 0)
+                                    <button 
+                                        @click="activeCategory = '{{ $category->id }}'"
+                                        :class="activeCategory === '{{ $category->id }}' 
+                                            ? 'bg-amber-500 text-white shadow-lg' 
+                                            : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-amber-100 dark:hover:bg-zinc-700'"
+                                        class="px-4 py-2 rounded-full font-medium text-sm transition-all duration-200 border border-zinc-200 dark:border-zinc-700"
+                                    >
+                                        {{ $category->name }}
+                                        <span class="ml-1 text-xs opacity-70">({{ $category->activeMenus->count() }})</span>
+                                    </button>
+                                @endif
+                            @endforeach
+                        </div>
+                        
+                        <!-- Menu Items by Category -->
                         @foreach ($categories as $category)
                             @if ($category->activeMenus->count() > 0)
-                                <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6">
+                                <div x-show="activeCategory === '{{ $category->id }}'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6">
                                     <h3 class="text-lg font-bold text-amber-600 dark:text-amber-400 mb-4">{{ $category->name }}</h3>
                                     
                                     <div class="space-y-4">

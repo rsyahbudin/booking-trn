@@ -10,6 +10,9 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- Alpine.js for interactive components -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
         body {
@@ -214,42 +217,72 @@
             </div>
             
             @php
-                $categories = \App\Models\Category::active()->ordered()->with(['activeMenus' => fn($q) => $q->take(3)])->get();
+                $categories = \App\Models\Category::active()->ordered()->with(['activeMenus' => fn($q) => $q->with('variants')])->get();
             @endphp
 
-            <div class="space-y-12">
-                @foreach ($categories as $category)
-                    @if ($category->activeMenus->count() > 0)
-                        <div>
-                            <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-6">{{ $category->name }}</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                @foreach ($category->activeMenus as $menu)
-                                    <div class="bg-white dark:bg-zinc-800 rounded-2xl overflow-hidden shadow-lg card-hover border border-zinc-100 dark:border-zinc-700">
-                                        <div class="aspect-video bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                            @if ($menu->image_url)
-                                                <img src="{{ $menu->image_url }}" alt="{{ $menu->name }}" class="w-full h-full object-cover">
-                                            @else
-                                                <span class="text-5xl">🍽️</span>
-                                            @endif
-                                        </div>
-                                        <div class="p-6">
-                                            <h4 class="font-bold text-lg text-zinc-800 dark:text-white mb-2">{{ $menu->name }}</h4>
-                                            @if ($menu->description)
-                                                <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2">{{ $menu->description }}</p>
-                                            @endif
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-xl font-bold text-amber-600 dark:text-amber-400">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
-                                                @if ($menu->variants->count() > 0)
-                                                    <span class="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full">{{ $menu->variants->count() }} pilihan</span>
+            <!-- Category Tabs and Menu Content -->
+            <div x-data="{ activeCategory: 'all' }">
+                <!-- Category Tabs -->
+                <div class="flex flex-wrap justify-center gap-2 mb-8">
+                    <button 
+                        @click="activeCategory = 'all'"
+                        :class="activeCategory === 'all' 
+                            ? 'bg-amber-500 text-white shadow-lg' 
+                            : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-amber-100 dark:hover:bg-zinc-700'"
+                        class="px-5 py-2.5 rounded-full font-medium transition-all duration-200 border border-zinc-200 dark:border-zinc-700"
+                    >
+                        Semua
+                    </button>
+                    @foreach ($categories as $category)
+                        @if ($category->activeMenus->count() > 0)
+                            <button 
+                                @click="activeCategory = '{{ $category->id }}'"
+                                :class="activeCategory === '{{ $category->id }}' 
+                                    ? 'bg-amber-500 text-white shadow-lg' 
+                                    : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-amber-100 dark:hover:bg-zinc-700'"
+                                class="px-5 py-2.5 rounded-full font-medium transition-all duration-200 border border-zinc-200 dark:border-zinc-700"
+                            >
+                                {{ $category->name }}
+                            </button>
+                        @endif
+                    @endforeach
+                </div>
+
+                <!-- Menu Items -->
+                <div class="space-y-12">
+                    @foreach ($categories as $category)
+                        @if ($category->activeMenus->count() > 0)
+                            <div x-show="activeCategory === 'all' || activeCategory === '{{ $category->id }}'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                                <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-6">{{ $category->name }}</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    @foreach ($category->activeMenus->take(6) as $menu)
+                                        <div class="bg-white dark:bg-zinc-800 rounded-2xl overflow-hidden shadow-lg card-hover border border-zinc-100 dark:border-zinc-700">
+                                            <div class="aspect-video bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                                @if ($menu->image_url)
+                                                    <img src="{{ $menu->image_url }}" alt="{{ $menu->name }}" class="w-full h-full object-cover">
+                                                @else
+                                                    <span class="text-5xl">🍽️</span>
                                                 @endif
                                             </div>
+                                            <div class="p-6">
+                                                <h4 class="font-bold text-lg text-zinc-800 dark:text-white mb-2">{{ $menu->name }}</h4>
+                                                @if ($menu->description)
+                                                    <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2">{{ $menu->description }}</p>
+                                                @endif
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-xl font-bold text-amber-600 dark:text-amber-400">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
+                                                    @if ($menu->variants->count() > 0)
+                                                        <span class="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full">{{ $menu->variants->count() }} pilihan</span>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
-                    @endif
-                @endforeach
+                        @endif
+                    @endforeach
+                </div>
             </div>
 
             <div class="text-center mt-12">
