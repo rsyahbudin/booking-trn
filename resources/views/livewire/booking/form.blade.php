@@ -163,6 +163,9 @@ new class extends Component {
         
         $this->calculateTotal();
         $this->selectedOptions[$menuId] = [];
+        
+        // Dispatch toast notification
+        $this->dispatch('cart-updated', name: $menu->name);
     }
 
     public function removeFromCart(string $cartKey): void
@@ -574,8 +577,16 @@ new class extends Component {
                                     @endforeach
                                 </div>
 
-                                <div class="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                                    <div class="flex justify-between text-lg font-bold">
+                                <div class="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700 space-y-2">
+                                    <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
+                                        <span>Subtotal</span>
+                                        <span>Rp {{ number_format($subtotalAmount, 0, ',', '.') }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
+                                        <span>PPN (10%)</span>
+                                        <span>Rp {{ number_format($taxAmount, 0, ',', '.') }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-lg font-bold pt-2 border-t border-zinc-200 dark:border-zinc-700">
                                         <span class="text-zinc-800 dark:text-white">Total</span>
                                         <span class="text-amber-600 dark:text-amber-400">Rp {{ number_format($totalAmount, 0, ',', '.') }}</span>
                                     </div>
@@ -702,4 +713,35 @@ new class extends Component {
     <footer class="py-8 text-center text-zinc-500 dark:text-zinc-400 text-sm">
         &copy; {{ date('Y') }} Booking Buka Puasa. All rights reserved.
     </footer>
+
+    <!-- Toast Notification -->
+    <div
+        x-data="{ 
+            show: false, 
+            message: '',
+            init() {
+                Livewire.on('cart-updated', (data) => {
+                    this.message = data.name + ' ditambahkan ke keranjang!';
+                    this.show = true;
+                    setTimeout(() => this.show = false, 3000);
+                });
+            }
+        }"
+        x-show="show"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-2"
+        class="fixed top-6 right-6 z-50"
+        style="display: none;"
+    >
+        <div class="flex items-center gap-3 bg-green-500 text-white px-5 py-3 rounded-xl shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span x-text="message" class="font-medium"></span>
+        </div>
+    </div>
 </div>
