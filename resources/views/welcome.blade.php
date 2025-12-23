@@ -221,18 +221,9 @@
             @endphp
 
             <!-- Category Tabs and Menu Content -->
-            <div x-data="{ activeCategory: 'all' }">
+            <div x-data="{ activeCategory: '{{ $categories->first()?->id }}' }">
                 <!-- Category Tabs -->
                 <div class="flex flex-wrap justify-center gap-2 mb-8">
-                    <button 
-                        @click="activeCategory = 'all'"
-                        :class="activeCategory === 'all' 
-                            ? 'bg-amber-500 text-white shadow-lg' 
-                            : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-amber-100 dark:hover:bg-zinc-700'"
-                        class="px-5 py-2.5 rounded-full font-medium transition-all duration-200 border border-zinc-200 dark:border-zinc-700"
-                    >
-                        Semua
-                    </button>
                     @foreach ($categories as $category)
                         @if ($category->activeMenus->count() > 0)
                             <button 
@@ -252,7 +243,7 @@
                 <div class="space-y-12">
                     @foreach ($categories as $category)
                         @if ($category->activeMenus->count() > 0)
-                            <div x-show="activeCategory === 'all' || activeCategory === '{{ $category->id }}'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                            <div x-show="activeCategory === '{{ $category->id }}'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
                                 <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-6">{{ $category->name }}</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     @foreach ($category->activeMenus->take(6) as $menu)
