@@ -244,7 +244,7 @@ new class extends Component {
 
         // Generate WhatsApp message
         $message = $this->generateWhatsAppMessage($booking);
-        $waNumber = '6285813035292';
+        $waNumber = \App\Models\SiteSetting::get('whatsapp', '6285813035292');
         
         $waUrl = 'https://wa.me/' . $waNumber . '?text=' . urlencode($message);
 
@@ -260,39 +260,52 @@ new class extends Component {
     {
         $spot = SeatingSpot::find($this->seating_spot_id);
         
-        $message = "*BOOKING BUKA PUASA DI TERAS RUMAH NENEK*\n\n";
-        $message .= "*Kode Booking:* {$booking->booking_code}\n\n";
-        $message .= "*Data Pelanggan:*\n";
-        $message .= "Nama: {$this->customer_name}\n";
-        $message .= "Tanggal: " . date('d F Y', strtotime($this->booking_date)) . "\n";
-        $message .= "Jumlah Tamu: {$this->guest_count} orang\n";
-        $message .= "WhatsApp: {$this->whatsapp}\n";
-        if ($this->instagram) {
-            $message .= "Instagram: {$this->instagram}\n";
-        }
-        $message .= "Spot: {$spot->name}\n\n";
-        
-        $message .= "*Pesanan:*\n";
+        // Build menu items string
+        $menuItemsText = '';
         foreach ($this->cart as $item) {
             $options = !empty($item['options']) ? ' (' . implode(', ', $item['options']) . ')' : '';
-            $message .= "• {$item['name']}{$options} x{$item['quantity']} = Rp " . number_format($item['price'] * $item['quantity'], 0, ',', '.') . "\n";
+            $menuItemsText .= "• {$item['name']}{$options} x{$item['quantity']} = Rp " . number_format($item['price'] * $item['quantity'], 0, ',', '.') . "\n";
         }
         
-        $message .= "\n*Rincian Pembayaran:*\n";
-        $message .= "Subtotal: Rp " . number_format($this->subtotalAmount, 0, ',', '.') . "\n";
-        $message .= "PPN (10%): Rp " . number_format($this->taxAmount, 0, ',', '.') . "\n";
-        $message .= "*Total: Rp " . number_format($this->totalAmount, 0, ',', '.') . "*\n";
-        $message .= "*DP (50%): Rp " . number_format($this->dpAmount, 0, ',', '.') . "*\n\n";
+        // Get template from settings
+        $template = \App\Models\SiteSetting::get('wa_template_customer', $this->getDefaultCustomerTemplate());
         
-        $message .= "Bukti Transfer: " . url('storage/' . $booking->payment_proof) . "\n\n";
-        
-        if ($this->notes) {
-            $message .= "*Catatan:* {$this->notes}\n\n";
-        }
-        
-        $message .= "Mohon konfirmasi booking ini. Terima kasih!";
+        // Replace placeholders
+        $message = \App\Models\SiteSetting::parseTemplate($template, [
+            'booking_code' => $booking->booking_code,
+            'customer_name' => $this->customer_name,
+            'booking_date' => date('d F Y', strtotime($this->booking_date)),
+            'guest_count' => $this->guest_count . ' orang',
+            'spot_name' => $spot->name,
+            'menu_items' => $menuItemsText,
+            'subtotal' => 'Rp ' . number_format($this->subtotalAmount, 0, ',', '.'),
+            'tax' => 'Rp ' . number_format($this->taxAmount, 0, ',', '.'),
+            'total' => 'Rp ' . number_format($this->totalAmount, 0, ',', '.'),
+            'dp_amount' => 'Rp ' . number_format($this->dpAmount, 0, ',', '.'),
+            'whatsapp' => $this->whatsapp,
+            'instagram' => $this->instagram ?? '-',
+            'notes' => $this->notes ?? '-',
+            'payment_proof_url' => url('storage/' . $booking->payment_proof),
+        ]);
         
         return $message;
+    }
+
+    private function getDefaultCustomerTemplate(): string
+    {
+        return "Halo, saya ingin konfirmasi booking:\n\n" .
+               "Kode: {booking_code}\n" .
+               "Nama: {customer_name}\n" .
+               "Tanggal: {booking_date}\n" .
+               "Jumlah Tamu: {guest_count}\n" .
+               "Spot: {spot_name}\n\n" .
+               "*Pesanan:*\n{menu_items}\n" .
+               "*Pembayaran:*\n" .
+               "Subtotal: {subtotal}\n" .
+               "PPN 10%: {tax}\n" .
+               "Total: {total}\n" .
+               "DP (50%): {dp_amount}\n\n" .
+               "Terima kasih!";
     }
 
     public function with(): array

@@ -45,6 +45,10 @@
                 <flux:navlist.item icon="map-pin" href="{{ route('admin.seating-spots.index') }}" :current="request()->routeIs('admin.seating-spots.*')">
                     Spot Duduk
                 </flux:navlist.item>
+
+                <flux:navlist.item icon="cog-6-tooth" href="{{ route('admin.settings') }}" :current="request()->routeIs('admin.settings')">
+                    Pengaturan
+                </flux:navlist.item>
             @endif
         </flux:navlist>
 

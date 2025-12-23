@@ -68,4 +68,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::view('/seating-spots', 'admin.seating-spots.index')->name('seating-spots.index');
     Route::view('/seating-spots/create', 'admin.seating-spots.create')->name('seating-spots.create');
     Route::get('/seating-spots/{spot}/edit', fn(SeatingSpot $spot) => view('admin.seating-spots.edit', compact('spot')))->name('seating-spots.edit');
+
+    // Site Settings
+    Route::view('/settings', 'admin.settings')->name('settings');
 });
