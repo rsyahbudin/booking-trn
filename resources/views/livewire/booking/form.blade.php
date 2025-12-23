@@ -19,7 +19,7 @@ new class extends Component {
     public string $customer_name = '';
     public string $booking_date = '';
     public int $guest_count = 1;
-    public string $whatsapp = '';
+    public string $whatsapp = '62';
     public string $instagram = '';
     public string $seating_spot_id = '';
     public bool $agree_rules = false;
@@ -79,7 +79,7 @@ new class extends Component {
                 'customer_name' => 'required|string|max:255',
                 'booking_date' => 'required|date|after_or_equal:today',
                 'guest_count' => 'required|integer|min:1',
-                'whatsapp' => 'required|string|max:20',
+                'whatsapp' => ['required', 'string', 'max:20', 'regex:/^62[1-9][0-9]{7,12}$/'],
                 'instagram' => 'nullable|string|max:255',
                 'seating_spot_id' => 'required|exists:seating_spots,id',
                 'agree_rules' => 'accepted',
@@ -89,6 +89,7 @@ new class extends Component {
                 'guest_count.required' => 'Jumlah tamu harus diisi',
                 'guest_count.min' => 'Minimal 1 orang',
                 'whatsapp.required' => 'Nomor WhatsApp harus diisi',
+                'whatsapp.regex' => 'Format nomor WhatsApp tidak valid (contoh: 628123456789)',
                 'seating_spot_id.required' => 'Pilih spot duduk',
                 'agree_rules.accepted' => 'Anda harus menyetujui aturan booking',
             ]);
@@ -404,7 +405,11 @@ new class extends Component {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Nomor WhatsApp *</label>
-                                <input type="text" wire:model="whatsapp" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="628123456789">
+                                <div class="flex">
+                                    <span class="inline-flex items-center px-4 py-3 rounded-l-xl border border-r-0 border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium">+</span>
+                                    <input type="text" wire:model="whatsapp" class="w-full px-4 py-3 rounded-r-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="628123456789">
+                                </div>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Format: 62 diikuti nomor tanpa angka 0 di depan (contoh: 628123456789)</p>
                                 @error('whatsapp') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                             <div>
