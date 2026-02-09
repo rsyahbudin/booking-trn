@@ -19,9 +19,10 @@ new class extends Component {
     public string $customer_name = '';
     public string $booking_date = '';
     public int $guest_count = 1;
-    public string $whatsapp = '62';
+    public string $whatsapp = '';
     public string $instagram = '';
     public string $seating_spot_id = '';
+    public string $alternative_seating_spot_id = '';
     public bool $agree_rules = false;
     
     // Step 2: Menu Selection
@@ -79,9 +80,10 @@ new class extends Component {
                 'customer_name' => 'required|string|max:255',
                 'booking_date' => 'required|date|after_or_equal:today',
                 'guest_count' => 'required|integer|min:1',
-                'whatsapp' => ['required', 'string', 'max:20', 'regex:/^62[1-9][0-9]{7,12}$/'],
+                'whatsapp' => ['required', 'string', 'max:20', 'regex:/^8[0-9]{8,13}$/'],
                 'instagram' => 'nullable|string|max:255',
                 'seating_spot_id' => 'required|exists:seating_spots,id',
+                'alternative_seating_spot_id' => 'required|exists:seating_spots,id|different:seating_spot_id',
                 'agree_rules' => 'accepted',
             ], [
                 'customer_name.required' => 'Nama harus diisi',
@@ -89,8 +91,10 @@ new class extends Component {
                 'guest_count.required' => 'Jumlah tamu harus diisi',
                 'guest_count.min' => 'Minimal 1 orang',
                 'whatsapp.required' => 'Nomor WhatsApp harus diisi',
-                'whatsapp.regex' => 'Format nomor WhatsApp tidak valid (contoh: 628123456789)',
-                'seating_spot_id.required' => 'Pilih spot duduk',
+                'whatsapp.regex' => 'Format nomor WhatsApp tidak valid (contoh: 8123456789)',
+                'seating_spot_id.required' => 'Pilih spot prioritas',
+                'alternative_seating_spot_id.required' => 'Pilih spot alternatif',
+                'alternative_seating_spot_id.different' => 'Spot alternatif harus berbeda dengan spot prioritas',
                 'agree_rules.accepted' => 'Anda harus menyetujui aturan booking',
             ]);
 
@@ -218,9 +222,10 @@ new class extends Component {
             'customer_name' => $this->customer_name,
             'booking_date' => $this->booking_date,
             'guest_count' => $this->guest_count,
-            'whatsapp' => $this->whatsapp,
+            'whatsapp' => '62' . $this->whatsapp,
             'instagram' => $this->instagram,
             'seating_spot_id' => $this->seating_spot_id,
+            'alternative_seating_spot_id' => $this->alternative_seating_spot_id,
             'subtotal_amount' => $this->subtotalAmount,
             'tax_amount' => $this->taxAmount,
             'total_amount' => $this->totalAmount,
@@ -259,6 +264,7 @@ new class extends Component {
     private function generateWhatsAppMessage(Booking $booking): string
     {
         $spot = SeatingSpot::find($this->seating_spot_id);
+        $alternativeSpot = SeatingSpot::find($this->alternative_seating_spot_id);
         
         // Build menu items string
         $menuItemsText = '';
@@ -277,12 +283,13 @@ new class extends Component {
             'booking_date' => date('d F Y', strtotime($this->booking_date)),
             'guest_count' => $this->guest_count . ' orang',
             'spot_name' => $spot->name,
+            'alternative_spot_name' => $alternativeSpot->name,
             'menu_items' => $menuItemsText,
             'subtotal' => 'Rp ' . number_format($this->subtotalAmount, 0, ',', '.'),
             'tax' => 'Rp ' . number_format($this->taxAmount, 0, ',', '.'),
             'total' => 'Rp ' . number_format($this->totalAmount, 0, ',', '.'),
             'dp_amount' => 'Rp ' . number_format($this->dpAmount, 0, ',', '.'),
-            'whatsapp' => $this->whatsapp,
+            'whatsapp' => $booking->whatsapp,
             'instagram' => $this->instagram ?? '-',
             'notes' => $this->notes ?? '-',
             'payment_proof_url' => url('storage/' . $booking->payment_proof),
@@ -298,7 +305,8 @@ new class extends Component {
                "Nama: {customer_name}\n" .
                "Tanggal: {booking_date}\n" .
                "Jumlah Tamu: {guest_count}\n" .
-               "Spot: {spot_name}\n\n" .
+               "Spot Prioritas: {spot_name}\n" .
+               "Spot Alternatif: {alternative_spot_name}\n\n" .
                "*Pesanan:*\n{menu_items}\n" .
                "*Pembayaran:*\n" .
                "Subtotal: {subtotal}\n" .
@@ -418,11 +426,28 @@ new class extends Component {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Nomor WhatsApp *</label>
-                                <div class="flex">
-                                    <span class="inline-flex items-center px-4 py-3 rounded-l-xl border border-r-0 border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium">+</span>
-                                    <input type="text" wire:model="whatsapp" class="w-full px-4 py-3 rounded-r-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="628123456789">
+                                <div class="flex gap-2">
+                                    <span class="inline-flex items-center px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium">+62</span>
+                                    <input 
+                                        type="text" 
+                                        wire:model="whatsapp" 
+                                        class="flex-1 px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent" 
+                                        placeholder="8123456789"
+                                        x-data="{ initialized: false }"
+                                        x-init="
+                                            // Don't initialize with '62' - it's shown in the prefix
+                                            initialized = true;
+                                        "
+                                        x-on:input="
+                                            let value = $el.value;
+                                            // Remove any '62' prefix if user types it (it's already in the prefix badge)
+                                            if (value.startsWith('62')) {
+                                                $el.value = value.substring(2);
+                                            }
+                                        "
+                                    >
                                 </div>
-                                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Format: 62 diikuti nomor tanpa angka 0 di depan (contoh: 628123456789)</p>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Masukkan nomor tanpa 62 di depan (contoh: 8123456789)</p>
                                 @error('whatsapp') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                             <div>
@@ -431,30 +456,101 @@ new class extends Component {
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Pilih Spot Duduk *</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                @foreach ($seatingSpots as $spot)
-                                    <label class="relative cursor-pointer">
-                                        <input type="radio" wire:model="seating_spot_id" value="{{ $spot->id }}" class="peer sr-only">
-                                        <div class="p-4 rounded-xl border-2 border-zinc-200 dark:border-zinc-600 peer-checked:border-amber-500 peer-checked:bg-amber-50 dark:peer-checked:bg-amber-900/20 transition">
-                                            <div class="flex items-center gap-3">
-                                                <span class="text-2xl">🪑</span>
-                                                <div>
-                                                    <div class="font-medium text-zinc-800 dark:text-white">{{ $spot->name }}</div>
-                                                    @if ($spot->description)
-                                                        <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $spot->description }}</div>
-                                                    @endif
-                                                    @if ($spot->capacity)
-                                                        <div class="text-xs text-amber-600 dark:text-amber-400">Kapasitas: {{ $spot->capacity }} orang</div>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
+                        <div x-data="{ primarySpot: @entangle('seating_spot_id'), altSpot: @entangle('alternative_seating_spot_id') }">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <!-- Priority Spot -->
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        <span class="flex items-center gap-2">
+                                            <span class="text-amber-600 dark:text-amber-400">⭐</span>
+                                            Spot Prioritas *
+                                        </span>
                                     </label>
-                                @endforeach
+                                    <div class="space-y-2">
+                                        @foreach ($seatingSpots as $spot)
+                                            <label class="relative cursor-pointer block">
+                                                <input 
+                                                    type="radio" 
+                                                    wire:model.live="seating_spot_id" 
+                                                    value="{{ $spot->id }}" 
+                                                    class="peer sr-only"
+                                                    x-bind:disabled="altSpot === '{{ $spot->id }}'"
+                                                    x-on:click="
+                                                        // Prevent deselection - radio can only change, not uncheck
+                                                        if (primarySpot === '{{ $spot->id }}') {
+                                                            event.preventDefault();
+                                                        }
+                                                    "
+                                                >
+                                                <div 
+                                                    class="p-3 rounded-lg border-2 transition peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+                                                    x-bind:class="altSpot === '{{ $spot->id }}' 
+                                                        ? 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800' 
+                                                        : 'border-zinc-200 dark:border-zinc-600 peer-checked:border-amber-500 peer-checked:bg-amber-50 dark:peer-checked:bg-amber-900/20'"
+                                                >
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xl">🪑</span>
+                                                        <div class="flex-1 min-w-0">
+                                                            <div class="font-medium text-sm text-zinc-800 dark:text-white">{{ $spot->name }}</div>
+                                                            @if ($spot->capacity)
+                                                                <div class="text-xs text-zinc-500 dark:text-zinc-400">Maks: {{ $spot->capacity }} orang</div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    @error('seating_spot_id') <span class="text-red-500 text-sm block mt-1">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Alternative Spot -->
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        <span class="flex items-center gap-2">
+                                            <span class="text-blue-600 dark:text-blue-400">🔄</span>
+                                            Spot Alternatif *
+                                        </span>
+                                    </label>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-2">Jika spot prioritas penuh</p>
+                                    <div class="space-y-2">
+                                        @foreach ($seatingSpots as $spot)
+                                            <label class="relative cursor-pointer block">
+                                                <input 
+                                                    type="radio" 
+                                                    wire:model.live="alternative_seating_spot_id" 
+                                                    value="{{ $spot->id }}" 
+                                                    class="peer sr-only"
+                                                    x-bind:disabled="primarySpot === '{{ $spot->id }}'"
+                                                    x-on:click="
+                                                        // Prevent deselection - radio can only change, not uncheck
+                                                        if (altSpot === '{{ $spot->id }}') {
+                                                            event.preventDefault();
+                                                        }
+                                                    "
+                                                >
+                                                <div 
+                                                    class="p-3 rounded-lg border-2 transition peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+                                                    x-bind:class="primarySpot === '{{ $spot->id }}' 
+                                                        ? 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800' 
+                                                        : 'border-zinc-200 dark:border-zinc-600 peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20'"
+                                                >
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xl">🪑</span>
+                                                        <div class="flex-1 min-w-0">
+                                                            <div class="font-medium text-sm text-zinc-800 dark:text-white">{{ $spot->name }}</div>
+                                                            @if ($spot->capacity)
+                                                                <div class="text-xs text-zinc-500 dark:text-zinc-400">Maks: {{ $spot->capacity }} orang</div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    @error('alternative_seating_spot_id') <span class="text-red-500 text-sm block mt-1">{{ $message }}</span> @enderror
+                                </div>
                             </div>
-                            @error('seating_spot_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Booking Rules -->
@@ -755,13 +851,47 @@ new class extends Component {
     <div
         x-data="{ 
             show: false, 
-            message: '',
+            type: 'success',
+            title: '',
+            messages: [],
             init() {
+                // Listen for cart updates
                 Livewire.on('cart-updated', (data) => {
-                    this.message = data.name + ' ditambahkan ke keranjang!';
+                    this.type = 'success';
+                    this.title = 'Berhasil!';
+                    this.messages = [data.name + ' ditambahkan ke keranjang!'];
                     this.show = true;
                     setTimeout(() => this.show = false, 3000);
                 });
+                
+                // Listen for validation errors from Livewire
+                Livewire.hook('message.failed', (component, action, errors) => {
+                    if (errors && Object.keys(errors).length > 0) {
+                        this.showValidationErrors(errors);
+                    }
+                });
+                
+                // Check for validation errors on page load
+                @if ($errors->any())
+                    this.showValidationErrors({!! json_encode($errors->messages()) !!});
+                @endif
+            },
+            showValidationErrors(errors) {
+                this.type = 'error';
+                this.title = 'Mohon periksa field berikut:';
+                this.messages = [];
+                
+                // Convert errors object to array of messages
+                for (let field in errors) {
+                    if (Array.isArray(errors[field])) {
+                        this.messages = this.messages.concat(errors[field]);
+                    } else {
+                        this.messages.push(errors[field]);
+                    }
+                }
+                
+                this.show = true;
+                setTimeout(() => this.show = false, 6000);
             }
         }"
         x-show="show"
@@ -771,14 +901,56 @@ new class extends Component {
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 translate-y-2"
-        class="fixed top-6 right-6 z-50"
+        class="fixed top-6 right-6 z-50 max-w-md"
         style="display: none;"
     >
-        <div class="flex items-center gap-3 bg-green-500 text-white px-5 py-3 rounded-xl shadow-lg">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <span x-text="message" class="font-medium"></span>
+        <div 
+            :class="{
+                'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700': type === 'error',
+                'bg-green-500': type === 'success'
+            }"
+            class="rounded-xl shadow-lg"
+        >
+            <!-- Success Toast (Original Design) -->
+            <div x-show="type === 'success'" class="flex items-center gap-3 text-white px-5 py-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span x-text="messages[0]" class="font-medium"></span>
+            </div>
+            
+            <!-- Error Toast (New Design) -->
+            <div x-show="type === 'error'" class="border-l-4 p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    
+                    <div class="flex-1 min-w-0">
+                        <h3 
+                            x-text="title"
+                            class="font-semibold text-sm mb-1 text-red-800 dark:text-red-300"
+                        ></h3>
+                        <ul class="text-sm space-y-1 text-red-700 dark:text-red-400">
+                            <template x-for="(msg, index) in messages" :key="index">
+                                <li class="flex items-start gap-1.5">
+                                    <span class="mt-1.5 w-1 h-1 rounded-full bg-current flex-shrink-0"></span>
+                                    <span x-text="msg"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                    
+                    <button 
+                        @click="show = false"
+                        class="flex-shrink-0 ml-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

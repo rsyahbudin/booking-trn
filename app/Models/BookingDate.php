@@ -27,9 +27,13 @@ class BookingDate extends Model
     {
         $targetDate = Carbon::parse($date);
         $now = Carbon::now();
-        $cutoffTime = Carbon::today()->setHour(15)->setMinute(0);
+        $cutoffHour = config('booking.cutoff_hour', 15);
+        
+        // Create cutoff time for the target date (not today, but the actual target date)
+        $cutoffTime = Carbon::parse($targetDate->toDateString())->setHour($cutoffHour)->setMinute(0)->setSecond(0);
 
-        // Check if target date is today and current time is past 15:00
+        // Check if target date is today and current time is past cutoff hour
+        // This will automatically reset when the day changes (after midnight)
         if ($targetDate->isToday() && $now->gte($cutoffTime)) {
             // Check if admin has force opened this date
             $bookingDate = self::where('date', $targetDate->toDateString())->first();

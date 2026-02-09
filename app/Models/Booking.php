@@ -17,6 +17,7 @@ class Booking extends Model
         'whatsapp',
         'instagram',
         'seating_spot_id',
+        'alternative_seating_spot_id',
         'subtotal_amount',
         'tax_amount',
         'total_amount',
@@ -62,6 +63,11 @@ class Booking extends Model
     public function seatingSpot(): BelongsTo
     {
         return $this->belongsTo(SeatingSpot::class);
+    }
+
+    public function alternativeSeatingSpot(): BelongsTo
+    {
+        return $this->belongsTo(SeatingSpot::class, 'alternative_seating_spot_id');
     }
 
     public function items(): HasMany

@@ -8,7 +8,7 @@ new class extends Component {
 
     public function mount(Booking $booking): void
     {
-        $this->booking = $booking->load('seatingSpot', 'items.menu');
+        $this->booking = $booking->load('seatingSpot', 'alternativeSeatingSpot', 'items.menu');
     }
 
     public bool $showConfirmModal = false;
@@ -106,8 +106,18 @@ new class extends Component {
                         <p class="font-medium">{{ $booking->instagram ?: '-' }}</p>
                     </div>
                     <div>
-                        <flux:subheading>Spot Duduk</flux:subheading>
-                        <p class="font-medium">{{ $booking->seatingSpot->name }}</p>
+                        <flux:subheading>Spot Prioritas</flux:subheading>
+                        <p class="font-medium flex items-center gap-2">
+                            <span class="text-amber-600 dark:text-amber-400">⭐</span>
+                            {{ $booking->seatingSpot->name }}
+                        </p>
+                    </div>
+                    <div>
+                        <flux:subheading>Spot Alternatif</flux:subheading>
+                        <p class="font-medium flex items-center gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">🔄</span>
+                            {{ $booking->alternativeSeatingSpot?->name ?: '-' }}
+                        </p>
                     </div>
                 </div>
 
@@ -194,7 +204,7 @@ new class extends Component {
                                 }
                                 
                                 // Get template from settings
-                                $defaultTemplate = "Halo {customer_name}!\n\nBooking Anda telah *DIKONFIRMASI*\n\n*Detail Booking:*\nKode: {booking_code}\nTanggal: {booking_date}\nSpot: {spot_name}\n\n*Pesanan:*\n{menu_items}\n*Pembayaran:*\nTotal: {total}\nDibayar: {paid_amount}\n{remaining_text}\n\nSampai jumpa di Teras Rumah Nenek!";
+                                $defaultTemplate = "Halo {customer_name}!\n\nBooking Anda telah *DIKONFIRMASI*\n\n*Detail Booking:*\nKode: {booking_code}\nTanggal: {booking_date}\nSpot Prioritas: {spot_name}\nSpot Alternatif: {alternative_spot_name}\n\n*Pesanan:*\n{menu_items}\n*Pembayaran:*\nTotal: {total}\nDibayar: {paid_amount}\n{remaining_text}\n\nSampai jumpa di Teras Rumah Nenek!";
                                 $template = \App\Models\SiteSetting::get('wa_template_confirm', $defaultTemplate);
                                 
                                 // Replace placeholders
@@ -203,6 +213,7 @@ new class extends Component {
                                     'booking_code' => $booking->booking_code,
                                     'booking_date' => $booking->booking_date->format('d F Y'),
                                     'spot_name' => $booking->seatingSpot->name,
+                                    'alternative_spot_name' => $booking->alternativeSeatingSpot?->name ?: '-',
                                     'menu_items' => $menuItemsText,
                                     'total' => 'Rp ' . number_format($booking->total_amount, 0, ',', '.'),
                                     'paid_amount' => 'Rp ' . number_format($booking->paid_amount, 0, ',', '.'),

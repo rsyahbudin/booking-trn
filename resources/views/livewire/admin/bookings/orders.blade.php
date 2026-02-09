@@ -16,7 +16,7 @@ new class extends Component {
     public function with(): array
     {
         $query = Booking::query()
-            ->with(['seatingSpot', 'items.menu'])
+            ->with(['seatingSpot', 'alternativeSeatingSpot', 'items.menu'])
             ->when($this->dateFilter, fn($q) => $q->whereDate('booking_date', $this->dateFilter))
             ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
             ->orderBy('booking_date')
@@ -139,7 +139,11 @@ new class extends Component {
                             <div class="text-sm space-y-1 text-zinc-600 dark:text-zinc-400">
                                 <div>📞 {{ $booking->whatsapp }}</div>
                                 <div>👥 {{ $booking->guest_count }} orang</div>
-                                <div>🪑 {{ $booking->seatingSpot->name ?? '-' }}</div>
+                                <div>
+                                    <span title="Spot Prioritas">{{ $booking->seatingSpot->name ?? '-' }}</span>
+                                    <span class="text-zinc-400 mx-1">/</span>
+                                    <span title="Spot Alternatif" class="text-zinc-500">{{ $booking->alternativeSeatingSpot->name ?? '-' }}</span>
+                                </div>
                                 @if ($booking->notes)
                                     <div class="text-amber-600 dark:text-amber-400">📝 {{ $booking->notes }}</div>
                                 @endif

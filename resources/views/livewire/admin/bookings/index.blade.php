@@ -155,7 +155,7 @@ new class extends Component {
     public function with(): array
     {
         $query = Booking::query()
-            ->with('seatingSpot', 'items.menu')
+            ->with('seatingSpot', 'alternativeSeatingSpot', 'items.menu')
             ->when($this->search, fn($q) => $q->where('customer_name', 'like', "%{$this->search}%")
                 ->orWhere('booking_code', 'like', "%{$this->search}%")
                 ->orWhere('whatsapp', 'like', "%{$this->search}%"))
@@ -263,6 +263,7 @@ new class extends Component {
                         <x-column>Kode</x-column>
                         <x-column>Nama</x-column>
                         <x-column>Tanggal</x-column>
+                        <x-column>Spot</x-column>
                         <x-column>Pax</x-column>
                         <x-column>Total</x-column>
                         <x-column>Pembayaran</x-column>
@@ -281,6 +282,13 @@ new class extends Component {
                                     </div>
                                 </x-cell>
                                 <x-cell>{{ $booking->booking_date->format('d M Y') }}</x-cell>
+                                <x-cell>
+                                    <div class="text-sm">
+                                        <span title="Spot Prioritas">{{ $booking->seatingSpot->name }}</span>
+                                        <span class="text-zinc-400 mx-1">/</span>
+                                        <span title="Spot Alternatif" class="text-zinc-500">{{ $booking->alternativeSeatingSpot?->name ?: '-' }}</span>
+                                    </div>
+                                </x-cell>
                                 <x-cell>{{ $booking->guest_count }} orang</x-cell>
                                 <x-cell>Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</x-cell>
                                 <x-cell>
