@@ -81,7 +81,17 @@
     <flux:header class="lg:hidden">
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
         <flux:spacer />
-        <flux:profile avatar="" />
+
+        <flux:dropdown position="top" align="end">
+            <flux:profile avatar="" icon-trailing="chevron-down" />
+
+            <flux:menu>
+                <flux:menu.item icon="arrow-right-start-on-rectangle" href="{{ route('logout') }}"
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    Logout
+                </flux:menu.item>
+            </flux:menu>
+        </flux:dropdown>
     </flux:header>
 
     <!-- Main Content -->
