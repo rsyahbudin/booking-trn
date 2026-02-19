@@ -40,7 +40,12 @@
             background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ asset('img/hero-bg.jpg') }}');
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
+            background-attachment: scroll;
+        }
+        @media (min-width: 768px) {
+            .hero-bg {
+                background-attachment: fixed;
+            }
         }
     </style>
 </head>
@@ -90,7 +95,6 @@
                     <div class="flex flex-col sm:flex-row gap-4">
                         <a href="{{ route('booking.form') }}" class="inline-flex items-center justify-center gap-2 bg-white text-amber-600 hover:bg-amber-50 px-8 py-4 rounded-xl font-bold text-lg transition shadow-lg hover:shadow-xl">
                             <span>Booking Sekarang</span>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="#menu" class="inline-flex items-center justify-center gap-2 border-2 border-white/50 text-white hover:bg-white/10 px-8 py-4 rounded-xl font-bold text-lg transition">
                             Lihat Menu
@@ -105,7 +109,7 @@
                                 <img src="{{ asset('img/feature-icon.jpg') }}" alt="Feature Menu" class="w-full h-full object-cover">
                             </div>
                         </div>
-                        <!-- <div class="absolute -bottom-4 -right-4 bg-white rounded-2xl p-4 shadow-xl">
+                         <div class="absolute -bottom-4 -right-4 bg-white rounded-2xl p-4 shadow-xl">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -117,7 +121,7 @@
                             </div>
                         </div> -->
                     </div>
-                </div> -->
+                </div> 
             </div>
             
 
