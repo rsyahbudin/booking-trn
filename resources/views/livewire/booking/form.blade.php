@@ -417,12 +417,12 @@ new class extends Component {
                         <!-- Date & Guest Grid -->
                         <div class="grid grid-cols-2 gap-4 md:col-span-1">
                             <div class="relative">
-                                <input type="date" wire:model="booking_date" min="{{ date('Y-m-d') }}" id="booking_date" class="peer w-full px-4 pt-6 pb-1 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent placeholder-transparent transition shadow-sm min-h-[58px]">
+                                <input type="date" wire:model="booking_date" min="{{ date('Y-m-d') }}" id="booking_date" class="peer w-full px-4 pt-5 pb-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent placeholder-transparent transition shadow-sm h-[58px] appearance-none leading-tight">
                                 <label for="booking_date" class="absolute left-4 top-1 text-xs text-zinc-500 dark:text-zinc-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:top-1 peer-focus:text-xs peer-focus:text-amber-600">Tanggal</label>
                             </div>
                             
                             <div class="relative">
-                                <input type="number" wire:model="guest_count" min="1" id="guest_count" class="peer w-full px-4 pt-6 pb-1 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent placeholder-transparent transition shadow-sm min-h-[58px]">
+                                <input type="number" wire:model="guest_count" min="1" id="guest_count" class="peer w-full px-4 pt-5 pb-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent placeholder-transparent transition shadow-sm h-[58px] appearance-none leading-tight">
                                 <label for="guest_count" class="absolute left-4 top-1 text-xs text-zinc-500 dark:text-zinc-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:top-1 peer-focus:text-xs peer-focus:text-amber-600">Jumlah Pax</label>
                             </div>
                             @error('booking_date') <span class="text-red-500 text-xs block md:hidden col-span-2">{{ $message }}</span> @enderror
