@@ -466,9 +466,9 @@ new class extends Component {
                                             Spot Prioritas *
                                         </span>
                                     </label>
-                                    <div class="space-y-2">
+                                    <div class="flex overflow-x-auto gap-3 pb-4 -mx-4 px-4 scrollbar-hide snap-x lg:grid lg:grid-cols-2 lg:gap-3 lg:pb-0 lg:px-0 lg:mx-0">
                                         @foreach ($seatingSpots as $spot)
-                                            <label class="relative cursor-pointer block">
+                                            <label class="relative cursor-pointer block min-w-[160px] max-w-[160px] snap-center shrink-0 lg:min-w-0 lg:max-w-none">
                                                 <input 
                                                     type="radio" 
                                                     wire:model.live="seating_spot_id" 
@@ -483,15 +483,21 @@ new class extends Component {
                                                     "
                                                 >
                                                 <div 
-                                                    class="p-3 rounded-lg border-2 transition peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+                                                    class="h-full p-3 rounded-lg border-2 transition peer-disabled:opacity-50 peer-disabled:cursor-not-allowed flex flex-col items-center justify-center text-center lg:flex-row lg:text-left lg:justify-start"
                                                     x-bind:class="altSpot === '{{ $spot->id }}' 
                                                         ? 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800' 
                                                         : 'border-zinc-200 dark:border-zinc-600 peer-checked:border-amber-500 peer-checked:bg-amber-50 dark:peer-checked:bg-amber-900/20'"
                                                 >
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="text-xl">🪑</span>
+                                                    <div class="flex flex-col lg:flex-row items-center gap-3 w-full">
+                                                        @if($spot->image_url)
+                                                            <img src="{{ $spot->image_url }}" alt="{{ $spot->name }}" class="w-16 h-12 lg:w-16 lg:h-16 object-cover rounded-lg flex-shrink-0 bg-zinc-200 dark:bg-zinc-700">
+                                                        @else
+                                                            <div class="w-16 h-12 lg:w-16 lg:h-16 bg-zinc-200 dark:bg-zinc-700 rounded-lg flex items-center justify-center flex-shrink-0 text-2xl">
+                                                                🪑
+                                                            </div>
+                                                        @endif
                                                         <div class="flex-1 min-w-0">
-                                                            <div class="font-medium text-sm text-zinc-800 dark:text-white">{{ $spot->name }}</div>
+                                                            <div class="font-medium text-sm text-zinc-800 dark:text-white truncate">{{ $spot->name }}</div>
                                                             @if ($spot->capacity)
                                                                 <div class="text-xs text-zinc-500 dark:text-zinc-400">Maks: {{ $spot->capacity }} orang</div>
                                                             @endif
@@ -513,9 +519,9 @@ new class extends Component {
                                         </span>
                                     </label>
                                     <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-2">Jika spot prioritas penuh</p>
-                                    <div class="space-y-2">
+                                    <div class="flex overflow-x-auto gap-3 pb-4 -mx-4 px-4 scrollbar-hide snap-x lg:grid lg:grid-cols-2 lg:gap-3 lg:pb-0 lg:px-0 lg:mx-0">
                                         @foreach ($seatingSpots as $spot)
-                                            <label class="relative cursor-pointer block">
+                                            <label class="relative cursor-pointer block min-w-[160px] max-w-[160px] snap-center shrink-0 lg:min-w-0 lg:max-w-none">
                                                 <input 
                                                     type="radio" 
                                                     wire:model.live="alternative_seating_spot_id" 
@@ -530,15 +536,21 @@ new class extends Component {
                                                     "
                                                 >
                                                 <div 
-                                                    class="p-3 rounded-lg border-2 transition peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+                                                    class="h-full p-3 rounded-lg border-2 transition peer-disabled:opacity-50 peer-disabled:cursor-not-allowed flex flex-col items-center justify-center text-center lg:flex-row lg:text-left lg:justify-start"
                                                     x-bind:class="primarySpot === '{{ $spot->id }}' 
                                                         ? 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800' 
                                                         : 'border-zinc-200 dark:border-zinc-600 peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20'"
                                                 >
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="text-xl">🪑</span>
+                                                    <div class="flex flex-col lg:flex-row items-center gap-3 w-full">
+                                                        @if($spot->image_url)
+                                                            <img src="{{ $spot->image_url }}" alt="{{ $spot->name }}" class="w-16 h-12 lg:w-16 lg:h-16 object-cover rounded-lg flex-shrink-0 bg-zinc-200 dark:bg-zinc-700">
+                                                        @else
+                                                            <div class="w-16 h-12 lg:w-16 lg:h-16 bg-zinc-200 dark:bg-zinc-700 rounded-lg flex items-center justify-center flex-shrink-0 text-2xl">
+                                                                🪑
+                                                            </div>
+                                                        @endif
                                                         <div class="flex-1 min-w-0">
-                                                            <div class="font-medium text-sm text-zinc-800 dark:text-white">{{ $spot->name }}</div>
+                                                            <div class="font-medium text-sm text-zinc-800 dark:text-white truncate">{{ $spot->name }}</div>
                                                             @if ($spot->capacity)
                                                                 <div class="text-xs text-zinc-500 dark:text-zinc-400">Maks: {{ $spot->capacity }} orang</div>
                                                             @endif
@@ -873,7 +885,7 @@ new class extends Component {
                 
                 // Check for validation errors on page load
                 @if ($errors->any())
-                    this.showValidationErrors({!! json_encode($errors->messages()) !!});
+                    this.showValidationErrors({{ json_encode($errors->messages()) }});
                 @endif
             },
             showValidationErrors(errors) {

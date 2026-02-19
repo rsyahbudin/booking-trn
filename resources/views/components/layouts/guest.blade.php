@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $title ?? 'Booking' }} - Buka Puasa di Teras Rumah Nenek</title>
+    <link rel="icon" href="{{ asset('img/logo-black.png') }}">
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />

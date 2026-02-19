@@ -116,7 +116,7 @@
                 
                 // Check for validation errors on page load
                 @if ($errors->any())
-                    this.showValidationErrors({!! json_encode($errors->messages()) !!});
+                    this.showValidationErrors({{ json_encode($errors->messages()) }});
                 @endif
             },
             showValidationErrors(errors) {
