@@ -25,31 +25,11 @@ class BookingDate extends Model
      */
     public static function isAvailableForBooking(string $date): bool
     {
-        $targetDate = Carbon::parse($date);
-        $now = Carbon::now();
-        $cutoffHour = config('booking.cutoff_hour', 15);
-        
-        // Create cutoff time for the target date (not today, but the actual target date)
-        $cutoffTime = Carbon::parse($targetDate->toDateString())->setHour($cutoffHour)->setMinute(0)->setSecond(0);
-
-        // Check if target date is today and current time is past cutoff hour
-        // This will automatically reset when the day changes (after midnight)
-        if ($targetDate->isToday() && $now->gte($cutoffTime)) {
-            // Check if admin has force opened this date
-            $bookingDate = self::where('date', $targetDate->toDateString())->first();
-            
-            if ($bookingDate && $bookingDate->force_open) {
-                return true;
-            }
-            
-            return false;
-        }
-
         // Check if date exists in booking_dates and is marked as closed
-        $bookingDate = self::where('date', $targetDate->toDateString())->first();
+        $bookingDate = self::where('date', $date)->first();
         
         if ($bookingDate) {
-            return $bookingDate->is_open || $bookingDate->force_open;
+            return $bookingDate->is_open;
         }
 
         // Default: date is available
@@ -57,13 +37,13 @@ class BookingDate extends Model
     }
 
     /**
-     * Force open today's date for booking
+     * Open today's date for booking
      */
-    public static function forceOpenToday(): void
+    public static function openToday(): void
     {
         self::updateOrCreate(
             ['date' => Carbon::today()->toDateString()],
-            ['force_open' => true, 'is_open' => true]
+            ['is_open' => true]
         );
     }
 
@@ -74,16 +54,16 @@ class BookingDate extends Model
     {
         self::updateOrCreate(
             ['date' => Carbon::today()->toDateString()],
-            ['force_open' => false]
+            ['is_open' => false]
         );
     }
 
     /**
-     * Check if today is currently force opened
+     * Check if today is currently open
      */
-    public static function isTodayForceOpen(): bool
+    public static function isTodayOpen(): bool
     {
         $today = self::where('date', Carbon::today()->toDateString())->first();
-        return $today ? $today->force_open : false;
+        return $today ? $today->is_open : true; // Default true if no record exists
     }
 }

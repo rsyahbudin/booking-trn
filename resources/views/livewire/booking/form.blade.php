@@ -45,7 +45,8 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->booking_date = now()->format('Y-m-d');
+        $availableDates = $this->getAvailableDatesProperty();
+        $this->booking_date = !empty($availableDates) ? $availableDates[0] : now()->format('Y-m-d');
         $this->activeCategory = (string) Category::whereHas('activeMenus')->first()?->id;
     }
 
@@ -53,19 +54,10 @@ new class extends Component {
     {
         $dates = [];
         $now = Carbon::now();
-        $cutoffHour = config('booking.cutoff_hour', 15);
         
         // Generate next 30 days
         for ($i = 0; $i <= 30; $i++) {
             $date = Carbon::today()->addDays($i);
-            
-            // Skip if today and past cutoff time
-            if ($date->isToday() && $now->hour >= $cutoffHour) {
-                // Check if force opened
-                if (!BookingDate::isAvailableForBooking($date->toDateString())) {
-                    continue;
-                }
-            }
             
             // Check if date is available in BookingDate
             if (BookingDate::isAvailableForBooking($date->toDateString())) {
@@ -79,38 +71,45 @@ new class extends Component {
     public function nextStep(): void
     {
         if ($this->step === 1) {
-            $this->validate([
-                'customer_name' => 'required|string|max:255',
-                'booking_date' => 'required|date|after_or_equal:today',
-                'guest_count' => 'required|integer|min:1',
-                'whatsapp' => ['required', 'string', 'max:20', 'regex:/^8[0-9]{8,13}$/'],
-                'instagram' => 'nullable|string|max:255',
-                'seating_spot_id' => 'required|exists:seating_spots,id',
-                'alternative_seating_spot_id' => 'required|exists:seating_spots,id|different:seating_spot_id',
-                'agree_rules' => 'accepted',
-            ], [
-                'customer_name.required' => 'Nama harus diisi',
-                'booking_date.required' => 'Tanggal booking harus dipilih',
-                'guest_count.required' => 'Jumlah pax harus diisi',
-                'guest_count.min' => 'Minimal 1 pax',
-                'whatsapp.required' => 'Nomor WhatsApp harus diisi',
-                'whatsapp.regex' => 'Format nomor WhatsApp tidak valid (contoh: 8123456789)',
-                'seating_spot_id.required' => 'Pilih spot prioritas',
-                'alternative_seating_spot_id.required' => 'Pilih spot alternatif',
-                'alternative_seating_spot_id.different' => 'Spot alternatif harus berbeda dengan spot prioritas',
-                'agree_rules.accepted' => 'Anda harus menyetujui aturan booking',
-            ]);
+            try {
+                $this->validate([
+                    'customer_name' => 'required|string|max:255',
+                    'booking_date' => 'required|date|after_or_equal:today',
+                    'guest_count' => 'required|integer|min:1',
+                    'whatsapp' => ['required', 'string', 'max:20', 'regex:/^8[0-9]{8,13}$/'],
+                    'instagram' => 'nullable|string|max:255',
+                    'seating_spot_id' => 'required|exists:seating_spots,id',
+                    'alternative_seating_spot_id' => 'required|exists:seating_spots,id|different:seating_spot_id',
+                    'agree_rules' => 'accepted',
+                ], [
+                    'customer_name.required' => 'Nama harus diisi',
+                    'booking_date.required' => 'Tanggal booking harus dipilih',
+                    'guest_count.required' => 'Jumlah pax harus diisi',
+                    'guest_count.min' => 'Minimal 1 pax',
+                    'whatsapp.required' => 'Nomor WhatsApp harus diisi',
+                    'whatsapp.regex' => 'Format nomor WhatsApp tidak valid (contoh: 8123456789)',
+                    'seating_spot_id.required' => 'Pilih spot prioritas',
+                    'alternative_seating_spot_id.required' => 'Pilih spot alternatif',
+                    'alternative_seating_spot_id.different' => 'Spot alternatif harus berbeda dengan spot prioritas',
+                    'agree_rules.accepted' => 'Anda harus menyetujui aturan booking sebelum lanjut',
+                ]);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $firstError = collect($e->validator->errors()->all())->first() ?? 'Mohon periksa kembali kolom yang wajib diisi.';
+                $this->dispatch('validation-failed', $firstError);
+                throw $e;
+            }
 
             // Validate date availability
             if (!BookingDate::isAvailableForBooking($this->booking_date)) {
                 $this->addError('booking_date', 'Tanggal ini tidak tersedia untuk booking');
+                $this->dispatch('validation-failed', 'Pemesanan untuk tanggal ini sedang ditutup atau penuh.');
                 return;
             }
         }
         
         if ($this->step === 2) {
             if (empty($this->cart)) {
-                session()->flash('error', 'Pilih minimal 1 menu');
+                $this->dispatch('validation-failed', 'Pilih minimal 1 menu');
                 return;
             }
         }
@@ -134,7 +133,7 @@ new class extends Component {
         foreach ($menu->variants as $variant) {
             if ($variant->is_required) {
                 if (!isset($this->selectedOptions[$menuId][$variant->id]) || empty($this->selectedOptions[$menuId][$variant->id])) {
-                    session()->flash('variant_error_' . $menuId, 'Pilih ' . $variant->name . ' terlebih dahulu (wajib)');
+                    $this->dispatch('validation-failed', 'Pilih ' . $variant->name . ' terlebih dahulu (wajib)');
                     return;
                 }
             }
@@ -209,13 +208,19 @@ new class extends Component {
 
     public function submit(): void
     {
-        $this->validate([
-            'payment_proof' => 'required|image|max:5120',
-        ], [
-            'payment_proof.required' => 'Upload bukti pembayaran',
-            'payment_proof.image' => 'File harus berupa gambar',
-            'payment_proof.max' => 'Ukuran maksimal 5MB',
-        ]);
+        try {
+            $this->validate([
+                'payment_proof' => 'required|image|max:5120',
+            ], [
+                'payment_proof.required' => 'Upload bukti pembayaran',
+                'payment_proof.image' => 'File harus berupa gambar',
+                'payment_proof.max' => 'Ukuran maksimal 5MB (5120 KB)',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $firstError = collect($e->validator->errors()->all())->first() ?? 'Pilih bukti pembayaran yang valid.';
+            $this->dispatch('validation-failed', $firstError);
+            throw $e;
+        }
 
         // Save payment proof
         $paymentPath = $this->payment_proof->store('payments', 'public');
@@ -391,13 +396,6 @@ new class extends Component {
                 <div class="absolute left-0 top-4 h-[2px] bg-amber-500 -z-0 mx-8 transition-all duration-500" style="width: {{ ($step - 1) * 50 }}%; max-width: calc(100% - 4rem);"></div>
             </div>
 
-            @if (session('error'))
-                <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl text-sm flex items-start gap-3 max-w-md mx-auto">
-                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    {{ session('error') }}
-                </div>
-            @endif
-
             <!-- Step 1: Customer Data -->
             @if ($step === 1)
                 <div x-data="{ showRules: false }" class="space-y-6 animate-fade-in max-w-5xl mx-auto">
@@ -411,7 +409,6 @@ new class extends Component {
                         <div class="relative md:col-span-2">
                             <input type="text" wire:model="customer_name" id="customer_name" class="peer w-full px-4 pt-6 pb-1 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent placeholder-transparent transition shadow-sm" placeholder="Nama Lengkap">
                             <label for="customer_name" class="absolute left-4 top-1 text-xs text-zinc-500 dark:text-zinc-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:top-1 peer-focus:text-xs peer-focus:text-amber-600">Nama Lengkap</label>
-                            @error('customer_name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Date & Guest Grid -->
@@ -425,8 +422,6 @@ new class extends Component {
                                 <input type="number" wire:model="guest_count" min="1" id="guest_count" class="peer w-full px-4 pt-5 pb-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent placeholder-transparent transition shadow-sm h-[58px] appearance-none leading-tight">
                                 <label for="guest_count" class="absolute left-4 top-1 text-xs text-zinc-500 dark:text-zinc-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:top-1 peer-focus:text-xs peer-focus:text-amber-600">Jumlah Pax</label>
                             </div>
-                            @error('booking_date') <span class="text-red-500 text-xs block md:hidden col-span-2">{{ $message }}</span> @enderror
-                            @error('guest_count') <span class="text-red-500 text-xs block md:hidden col-span-2">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- WhatsApp & IG -->
@@ -436,7 +431,6 @@ new class extends Component {
                                     <span class="text-zinc-500 font-medium border-r border-zinc-300 dark:border-zinc-600 pr-2 mr-2">+62</span>
                                 </div>
                                 <input type="tel" wire:model="whatsapp" class="w-full pl-16 pr-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent placeholder-zinc-400 transition shadow-sm" placeholder="8123456789">
-                                @error('whatsapp') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                             
                             <div class="relative">
@@ -479,7 +473,6 @@ new class extends Component {
                                     </label>
                                 @endforeach
                             </div>
-                            @error('seating_spot_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Alternative Only shows after primary selected -->
@@ -498,7 +491,6 @@ new class extends Component {
                                     </label>
                                 @endforeach
                             </div>
-                            @error('alternative_seating_spot_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
@@ -513,7 +505,6 @@ new class extends Component {
                                 </span>
                             </div>
                         </label>
-                        @error('agree_rules') <span class="text-red-500 text-xs mt-2 block">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Desktop Next Button (Moved here) -->
@@ -630,9 +621,6 @@ new class extends Component {
                                                             </select>
                                                         </div>
                                                     @endforeach
-                                                    @if (session('variant_error_' . $menu->id))
-                                                        <p class="text-red-500 text-xs">{{ session('variant_error_' . $menu->id) }}</p>
-                                                    @endif
                                                 </div>
                                             @endif
                                         @endforeach
@@ -922,7 +910,6 @@ new class extends Component {
                                             @endif
                                         </div>
                                     </div>
-                                    @error('payment_proof') <span class="text-red-500 text-xs block text-center">{{ $message }}</span> @enderror
                                 </div>
                             </div>
 
@@ -967,11 +954,56 @@ new class extends Component {
         @endif
     </main>
 
-    <!-- Global Toast -->
-    <div x-data="{ show: false, message: '' }" x-on:cart-updated.window="show = true; message = $event.detail.name + ' ditambahkan'; setTimeout(() => show = false, 2000)" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] Pointer-events-none">
-        <div x-show="show" x-transition.move.top class="bg-zinc-900/90 text-white px-4 py-2 rounded-full text-sm font-medium shadow-xl backdrop-blur-sm flex items-center gap-2">
-            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            <span x-text="message"></span>
+    <!-- Global Toast / Error Handler -->
+    <div x-data="{ 
+            show: false, 
+            message: '', 
+            type: 'success',
+            init() {
+                // Success Toast for Cart
+                window.addEventListener('cart-updated', (event) => {
+                    this.type = 'success';
+                    this.message = event.detail.name + ' ditambahkan';
+                    this.show = true;
+                    setTimeout(() => { this.show = false }, 3000);
+                });
+
+                // Validation Error Handler from Livewire
+                Livewire.on('validation-failed', (data) => {
+                    this.type = 'error';
+                    this.message = (data && data.length > 0) ? data[0] : 'Mohon periksa kembali kolom yang wajib diisi.';
+                    this.show = true;
+                    setTimeout(() => { this.show = false }, 4000);
+                });
+            }
+        }" 
+        class="fixed top-24 right-4 md:right-8 z-[60] pointer-events-none flex flex-col items-end gap-2"
+    >
+        <div x-show="show" 
+             x-transition:enter="transition ease-out duration-300 transform"
+             x-transition:enter-start="opacity-0 translate-y-4 md:translate-y-0 md:translate-x-4"
+             x-transition:enter-end="opacity-100 translate-y-0 md:translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             :class="{
+                'bg-zinc-900/95 border border-zinc-700': type === 'success',
+                'bg-red-600/95 border border-red-500': type === 'error'
+             }"
+             class="text-white px-5 py-3.5 rounded-2xl md:rounded-xl text-sm font-medium shadow-2xl backdrop-blur-md flex items-center gap-3 w-[calc(100vw-2rem)] md:w-auto md:min-w-[300px] max-w-sm"
+             style="display: none;"
+        >
+            <template x-if="type === 'success'">
+                <div class="bg-green-500/20 p-1.5 rounded-full flex-shrink-0">
+                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+            </template>
+            <template x-if="type === 'error'">
+                <div class="bg-white/20 p-1.5 rounded-full flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+            </template>
+            <span x-text="message" class="flex-1 leading-snug"></span>
         </div>
     </div>
 </div>
