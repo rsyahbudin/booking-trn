@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Buka Puasa di Teras Rumah Nenek</title>
     <meta name="description" content="Reservasi buka puasa bersama di cafe kami. Nikmati berbagai menu lezat untuk berbuka puasa bersama keluarga dan teman.">
+    <link rel="icon" href="{{ asset('img/logo-black.png') }}">
+    
+    <!-- Open Graph tags for social sharing -->
+    <meta property="og:title" content="Buka Puasa di Teras Rumah Nenek">
+    <meta property="og:description" content="Reservasi buka puasa bersama di cafe kami. Nikmati berbagai menu lezat untuk berbuka puasa bersama keluarga dan teman.">
+    <meta property="og:image" content="{{ asset('img/logo-black.png') }}">
+    <meta property="og:type" content="website">
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" rel="stylesheet" />

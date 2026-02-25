@@ -3,9 +3,13 @@
 
 <title>{{ $title ?? config('app.name') }}</title>
 
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="{{ asset('img/logo-black.png') }}">
+<link rel="apple-touch-icon" href="{{ asset('img/logo-black.png') }}">
+
+<!-- Open Graph tags for social sharing -->
+<meta property="og:title" content="{{ $title ?? config('app.name') }}">
+<meta property="og:image" content="{{ asset('img/logo-black.png') }}">
+<meta property="og:type" content="website">
 
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />

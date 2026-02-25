@@ -45,7 +45,7 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->booking_date = now()->addDay()->format('Y-m-d');
+        $this->booking_date = now()->format('Y-m-d');
         $this->activeCategory = (string) Category::whereHas('activeMenus')->first()?->id;
     }
 
@@ -594,6 +594,9 @@ new class extends Component {
                                                     <div>
                                                         <h4 class="font-bold text-zinc-900 dark:text-white leading-tight mb-1 line-clamp-2">{{ $menu->name }}</h4>
                                                         <p class="text-amber-600 dark:text-amber-400 font-bold text-sm">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
+                                                        @if($menu->description)
+                                                            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2 leading-snug">{{ $menu->description }}</p>
+                                                        @endif
                                                     </div>
 
                                                     <!-- Add Button or Options -->
