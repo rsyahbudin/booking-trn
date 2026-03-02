@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('seating_spots', function (Blueprint $table) {
-            if (!Schema::hasColumn('seating_spots', 'image')) {
-                $table->string('image')->nullable()->after('capacity');
-            }
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->text('cancellation_reason')->nullable()->after('status');
         });
     }
 
@@ -23,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('seating_spots', function (Blueprint $table) {
-            $table->dropColumn('image');
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->dropColumn('cancellation_reason');
         });
     }
 };

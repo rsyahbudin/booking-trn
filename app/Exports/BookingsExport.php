@@ -11,13 +11,15 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
-class BookingsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithDrawings, WithColumnWidths
+class BookingsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithDrawings, WithColumnWidths, WithColumnFormatting
 {
     use Exportable;
 
@@ -77,6 +79,7 @@ class BookingsExport implements FromCollection, WithHeadings, WithMapping, WithS
             'Total',
             'DP (Bukti)',
             'Status Booking',
+            'Alasan Pembatalan',
             'Status Pembayaran',
             'Nominal Dibayar',
             'Sisa Pembayaran',
@@ -103,23 +106,24 @@ class BookingsExport implements FromCollection, WithHeadings, WithMapping, WithS
         return [
             $booking->booking_code,
             $booking->customer_name,
-            $booking->booking_date->format('d/m/Y'),
-            $booking->guest_count,
+            $booking->booking_date, // Return as date object for formatting
+            (int) $booking->guest_count,
             $booking->whatsapp,
             $booking->instagram ?? '-',
             $booking->seatingSpot->name ?? '-',
             $orders,
-            'Rp ' . number_format($booking->subtotal_amount ?? 0, 0, ',', '.'),
-            'Rp ' . number_format($booking->tax_amount ?? 0, 0, ',', '.'),
-            'Rp ' . number_format($booking->total_amount, 0, ',', '.'),
-            'Rp ' . number_format($booking->dp_amount, 0, ',', '.'),
+            (float) ($booking->subtotal_amount ?? 0),
+            (float) ($booking->tax_amount ?? 0),
+            (float) ($booking->total_amount ?? 0),
+            (float) ($booking->dp_amount ?? 0),
             $booking->status_label,
+            $booking->cancellation_reason ?? '-',
             $paymentStatusFull,
-            $booking->paid_amount ? 'Rp ' . number_format($booking->paid_amount, 0, ',', '.') : '-',
-            ($booking->payment_status === 'dp') ? 'Rp ' . number_format($remaining, 0, ',', '.') : '-',
+            $booking->paid_amount ? (float) $booking->paid_amount : 0,
+            ($booking->payment_status === 'dp') ? (float) $remaining : 0,
             $booking->notes ?? '-',
-            $booking->created_at->format('d/m/Y H:i'),
-            '', // Empty cell for image
+            $booking->created_at, // Return as date object
+            '', // Empty cell for image (Column T)
         ];
     }
     
@@ -142,7 +146,7 @@ class BookingsExport implements FromCollection, WithHeadings, WithMapping, WithS
                     $drawing->setDescription('Bukti Transfer');
                     $drawing->setPath($path);
                     $drawing->setHeight(80);
-                    $drawing->setCoordinates('S' . ($index + 2)); // Column S, Row index+2 (1 for header)
+                    $drawing->setCoordinates('T' . ($index + 2)); // Column T, Row index+2 (1 for header)
                     $drawing->setOffsetX(5);
                     $drawing->setOffsetY(5);
                     
@@ -158,7 +162,23 @@ class BookingsExport implements FromCollection, WithHeadings, WithMapping, WithS
     {
         return [
             'H' => 40, // Pesanan column width
-            'S' => 20, // Bukti Transfer column width
+            'T' => 20, // Bukti Transfer column width
+            'E' => 20, // WhatsApp
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'C' => 'dd/mm/yyyy',
+            'E' => '0', // WhatsApp
+            'I' => '"Rp" #,##0', // Subtotal
+            'J' => '"Rp" #,##0', // PPN
+            'K' => '"Rp" #,##0', // Total
+            'L' => '"Rp" #,##0', // DP
+            'P' => '"Rp" #,##0', // Paid Amount (shifted O->P)
+            'Q' => '"Rp" #,##0', // Remaining (shifted P->Q)
+            'S' => 'dd/mm/yyyy hh:mm', // Dibuat (shifted R->S)
         ];
     }
 
@@ -174,7 +194,7 @@ class BookingsExport implements FromCollection, WithHeadings, WithMapping, WithS
         $sheet->getStyle('H2:H' . $rowCount)->getAlignment()->setWrapText(true);
         
         // Vertical align middle for all cells
-        $sheet->getStyle('A1:S' . $rowCount)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A1:T' . $rowCount)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
         
         return [
             // Header row bold

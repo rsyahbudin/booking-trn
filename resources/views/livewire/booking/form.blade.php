@@ -354,6 +354,14 @@ new class extends Component {
     </header>
 
     <main class="max-w-md md:max-w-5xl mx-auto px-4 pt-6 transition-all duration-300">
+        <!-- Offline Indicator -->
+        <div wire:offline class="mb-4 animate-pulse">
+            <div class="bg-red-500 text-white px-4 py-2 rounded-xl text-center text-sm font-bold flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Koneksi terputus. Mohon periksa internet Anda.
+            </div>
+        </div>
+
         @if (request('success'))
             <!-- Success State -->
             <div class="flex flex-col items-center justify-center min-h-[60vh] text-center animate-fade-in-up">
@@ -894,20 +902,42 @@ new class extends Component {
 
                                 <!-- Upload -->
                                 <div class="space-y-4">
-                                    <div class="bg-zinc-50 dark:bg-zinc-900 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-4 text-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition relative">
-                                        <input type="file" wire:model="payment_proof" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                        <div class="pointer-events-none">
-                                            @if ($payment_proof)
+                                    <div 
+                                        x-data="{ isUploading: false, progress: 0 }"
+                                        x-on:livewire-upload-start="isUploading = true"
+                                        x-on:livewire-upload-finish="isUploading = false"
+                                        x-on:livewire-upload-error="isUploading = false; Livewire.dispatch('validation-failed', ['Gagal mengunggah file. Pastikan koneksi stabil dan ukuran file tidak melebihi 5MB.'])"
+                                        x-on:livewire-upload-progress="progress = $event.detail.progress"
+                                        class="bg-zinc-50 dark:bg-zinc-900 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-4 text-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition relative min-h-[160px] flex flex-col items-center justify-center overflow-hidden"
+                                    >
+                                        <input type="file" wire:model="payment_proof" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                        
+                                        @if ($payment_proof)
+                                            <div class="space-y-3 w-full">
+                                                <div class="relative w-full aspect-video rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
+                                                    <img src="{{ $payment_proof->temporaryUrl() }}" class="w-full h-full object-contain">
+                                                </div>
                                                 <div class="flex items-center justify-center gap-2 text-green-600 dark:text-green-400">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                    <span class="font-medium text-sm">File terpilih</span>
+                                                    <span class="font-medium text-sm">Siap dikirim</span>
                                                 </div>
-                                                <p class="text-xs text-zinc-500 mt-1 truncate px-4">{{ $payment_proof->temporaryUrl() }}</p>
-                                            @else
-                                                <svg class="w-8 h-8 text-zinc-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                <p class="text-[10px] text-zinc-500 truncate px-4">{{ $payment_proof->getClientOriginalName() }}</p>
+                                            </div>
+                                        @else
+                                            <div class="pointer-events-none">
+                                                <svg class="w-10 h-10 text-zinc-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Upload Bukti Transfer</p>
-                                                <p class="text-xs text-zinc-400 mt-1">Klik untuk memilih file</p>
-                                            @endif
+                                                <p class="text-xs text-zinc-400 mt-1">Klik untuk memilih file gambar</p>
+                                            </div>
+                                        @endif
+
+                                        <!-- Progress Bar Overlay -->
+                                        <div x-show="isUploading" class="absolute inset-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-6" style="display: none;">
+                                            <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2.5 mb-3 max-w-[240px]">
+                                                <div class="bg-amber-500 h-2.5 rounded-full transition-all duration-300" x-bind:style="'width: ' + progress + '%'"></div>
+                                            </div>
+                                            <p class="text-sm font-bold text-zinc-900 dark:text-white mb-1">Mengunggah... <span x-text="progress + '%'"></span></p>
+                                            <p class="text-[10px] text-zinc-500">Mohon tunggu sebentar</p>
                                         </div>
                                     </div>
                                 </div>
@@ -971,9 +1001,9 @@ new class extends Component {
                 // Validation Error Handler from Livewire
                 Livewire.on('validation-failed', (data) => {
                     this.type = 'error';
-                    this.message = (data && data.length > 0) ? data[0] : 'Mohon periksa kembali kolom yang wajib diisi.';
+                    this.message = (data && data.length > 0) ? (Array.isArray(data[0]) ? data[0][0] : data[0]) : 'Mohon periksa kembali kolom yang wajib diisi.';
                     this.show = true;
-                    setTimeout(() => { this.show = false }, 4000);
+                    setTimeout(() => { this.show = false }, 5000);
                 });
             }
         }" 

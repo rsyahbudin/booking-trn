@@ -2,8 +2,12 @@
 
 use App\Models\Booking;
 use Livewire\Volt\Component;
+use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Storage;
 
 new class extends Component {
+    use WithFileUploads;
+
     public Booking $booking;
 
     public function mount(Booking $booking): void
@@ -14,6 +18,12 @@ new class extends Component {
     public bool $showConfirmModal = false;
     public string $paymentStatus = 'dp';
     public string $paidAmount = '';
+
+    public bool $showEditPaymentModal = false;
+    public $new_payment_proof = null;
+
+    public bool $showCancelModal = false;
+    public string $cancellationReason = '';
 
     public function updatedPaymentStatus($value): void
     {
@@ -53,6 +63,86 @@ new class extends Component {
 
         $this->closeConfirmModal();
         session()->flash('message', 'Booking berhasil dikonfirmasi!');
+    }
+
+    public function openEditPaymentModal(): void
+    {
+        $this->new_payment_proof = null;
+        $this->showEditPaymentModal = true;
+    }
+
+    public function closeEditPaymentModal(): void
+    {
+        $this->showEditPaymentModal = false;
+        $this->new_payment_proof = null;
+    }
+
+    public function updatePaymentProof(): void
+    {
+        $this->validate([
+            'new_payment_proof' => 'required|image|max:5120',
+        ], [
+            'new_payment_proof.required' => 'Pilih file bukti pembayaran baru',
+            'new_payment_proof.image' => 'File harus berupa gambar',
+            'new_payment_proof.max' => 'Ukuran maksimal 5MB',
+        ]);
+
+        // Delete old proof if it exists
+        if ($this->booking->payment_proof) {
+            Storage::disk('public')->delete($this->booking->payment_proof);
+        }
+
+        // Store new proof
+        $path = $this->new_payment_proof->store('payments', 'public');
+
+        // Update booking
+        $this->booking->update([
+            'payment_proof' => $path,
+        ]);
+
+        $this->closeEditPaymentModal();
+        session()->flash('message', 'Bukti pembayaran berhasil diperbarui!');
+    }
+
+    public function openCancelModal(): void
+    {
+        $this->cancellationReason = '';
+        $this->showCancelModal = true;
+    }
+
+    public function closeCancelModal(): void
+    {
+        $this->showCancelModal = false;
+        $this->cancellationReason = '';
+    }
+
+    public function cancelBooking(): void
+    {
+        $this->validate([
+            'cancellationReason' => 'required|min:5',
+        ], [
+            'cancellationReason.required' => 'Alasan pembatalan harus diisi',
+            'cancellationReason.min' => 'Alasan pembatalan minimal 5 karakter',
+        ]);
+
+        $this->booking->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $this->cancellationReason,
+        ]);
+
+        $this->closeCancelModal();
+        session()->flash('message', 'Booking berhasil dibatalkan!');
+    }
+
+    public function updateStatus(string $status): void
+    {
+        if ($status === 'cancelled') {
+            $this->openCancelModal();
+            return;
+        }
+
+        $this->booking->update(['status' => $status]);
+        session()->flash('message', 'Status booking berhasil diperbarui!');
     }
 }; ?>
 
@@ -137,6 +227,12 @@ new class extends Component {
                     <div>
                         <flux:subheading>Status</flux:subheading>
                         <flux:badge size="lg" :color="$booking->status_color">{{ $booking->status_label }}</flux:badge>
+                        @if ($booking->status === 'cancelled' && $booking->cancellation_reason)
+                            <div class="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg text-sm">
+                                <span class="font-bold text-red-700 dark:text-red-400">Alasan Batal:</span>
+                                <p class="text-zinc-700 dark:text-zinc-300">{{ $booking->cancellation_reason }}</p>
+                            </div>
+                        @endif
                     </div>
                     
                     <div>
@@ -177,10 +273,23 @@ new class extends Component {
 
                     @if ($booking->payment_proof)
                         <div>
-                            <flux:subheading>Bukti Pembayaran</flux:subheading>
+                            <div class="flex items-center justify-between mb-2">
+                                <flux:subheading>Bukti Pembayaran</flux:subheading>
+                                <flux:button wire:click="openEditPaymentModal" size="sm" variant="ghost" icon="pencil-square">Edit Bukti</flux:button>
+                            </div>
                             <a href="{{ $booking->payment_proof_url }}" target="_blank">
-                                <img src="{{ $booking->payment_proof_url }}" alt="Bukti Pembayaran" class="mt-2 w-full max-w-xs rounded-lg border border-zinc-200 dark:border-zinc-700" />
+                                <img src="{{ $booking->payment_proof_url }}" alt="Bukti Pembayaran" class="w-full max-w-xs rounded-lg border border-zinc-200 dark:border-zinc-700 hover:opacity-75 transition" />
                             </a>
+                        </div>
+                    @else
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <flux:subheading>Bukti Pembayaran</flux:subheading>
+                                <flux:button wire:click="openEditPaymentModal" size="sm" variant="primary" icon="plus">Upload Bukti</flux:button>
+                            </div>
+                            <div class="p-4 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg text-center text-zinc-500 text-sm">
+                                Belum ada bukti pembayaran
+                            </div>
                         </div>
                     @endif
 
@@ -230,12 +339,14 @@ new class extends Component {
                         </div>
                     @endif
 
-                    @if ($booking->status === 'pending')
+                    @if ($booking->status !== 'cancelled')
                         <div class="pt-4 border-t border-zinc-200 dark:border-zinc-700 space-y-2">
-                            <flux:button wire:click="openConfirmModal" variant="primary" class="w-full" icon="check">
-                                Konfirmasi Booking
-                            </flux:button>
-                            <flux:button wire:click="updateStatus('cancelled')" wire:confirm="Yakin ingin membatalkan?" variant="danger" class="w-full" icon="x-mark">
+                            @if ($booking->status === 'pending')
+                                <flux:button wire:click="openConfirmModal" variant="primary" class="w-full" icon="check">
+                                    Konfirmasi Booking
+                                </flux:button>
+                            @endif
+                            <flux:button wire:click="updateStatus('cancelled')" variant="danger" class="w-full" icon="x-mark">
                                 Batalkan Booking
                             </flux:button>
                         </div>
@@ -341,6 +452,111 @@ new class extends Component {
                         <button wire:click="confirmBooking" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-medium">
                             ✓ Konfirmasi Booking
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Edit Payment Proof Modal -->
+    @if ($showEditPaymentModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-black/50" wire:click="closeEditPaymentModal"></div>
+            <div class="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="p-3 bg-amber-100 dark:bg-amber-900 rounded-full">
+                            <flux:icon.pencil-square class="size-6 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-zinc-800 dark:text-white">Edit Bukti Pembayaran</h3>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">Upload ulang bukti pembayaran yang benar</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div 
+                            x-data="{ isUploading: false, progress: 0 }"
+                            x-on:livewire-upload-start="isUploading = true"
+                            x-on:livewire-upload-finish="isUploading = false"
+                            x-on:livewire-upload-error="isUploading = false"
+                            x-on:livewire-upload-progress="progress = $event.detail.progress"
+                            class="relative"
+                        >
+                            <div class="bg-zinc-50 dark:bg-zinc-900 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-4 text-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition relative min-h-[140px] flex flex-col items-center justify-center">
+                                <input type="file" wire:model="new_payment_proof" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                
+                                @if ($new_payment_proof)
+                                    <div class="space-y-3 w-full">
+                                        <div class="relative w-full aspect-video rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
+                                            <img src="{{ $new_payment_proof->temporaryUrl() }}" class="w-full h-full object-contain">
+                                        </div>
+                                        <p class="text-[10px] text-zinc-500 truncate px-4">{{ $new_payment_proof->getClientOriginalName() }}</p>
+                                    </div>
+                                @else
+                                    <div class="pointer-events-none">
+                                        <flux:icon.photo class="size-8 text-zinc-400 mx-auto mb-2" />
+                                        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Pilih Bukti Baru</p>
+                                        <p class="text-xs text-zinc-400 mt-1">Klik atau seret file ke sini</p>
+                                    </div>
+                                @endif
+
+                                <!-- Loading Bar -->
+                                <div x-show="isUploading" class="absolute inset-x-0 bottom-0 p-4 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-b-xl">
+                                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-1.5 mb-1">
+                                        <div class="bg-amber-500 h-1.5 rounded-full" x-bind:style="'width: ' + progress + '%'"></div>
+                                    </div>
+                                    <div class="text-[10px] text-zinc-500 font-medium">Mengunggah... <span x-text="progress + '%'"></span></div>
+                                </div>
+                            </div>
+                            @error('new_payment_proof') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <flux:button wire:click="closeEditPaymentModal" variant="ghost">Batal</flux:button>
+                        <flux:button wire:click="updatePaymentProof" variant="primary" icon="check" wire:loading.attr="disabled">
+                            Update Bukti
+                        </flux:button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Cancellation Modal -->
+    @if ($showCancelModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-black/50" wire:click="closeCancelModal"></div>
+            <div class="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="p-3 bg-red-100 dark:bg-red-900 rounded-full">
+                            <flux:icon.x-mark class="size-6 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-zinc-800 dark:text-white">Batalkan Booking</h3>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">Berikan alasan kenapa booking ini dibatalkan</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <flux:textarea 
+                                wire:model="cancellationReason" 
+                                label="Alasan Pembatalan *" 
+                                placeholder="Contoh: Salah pilih tanggal, batal mendadak, dll..." 
+                                rows="4"
+                            />
+                            @error('cancellationReason') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <flux:button wire:click="closeCancelModal" variant="ghost">Batal</flux:button>
+                        <flux:button wire:click="cancelBooking" variant="danger" icon="x-mark">
+                            Ya, Batalkan Booking
+                        </flux:button>
                     </div>
                 </div>
             </div>

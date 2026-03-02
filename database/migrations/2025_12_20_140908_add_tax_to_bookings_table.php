@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->decimal('subtotal_amount', 12, 2)->default(0)->after('total_amount');
-            $table->decimal('tax_amount', 12, 2)->default(0)->after('subtotal_amount');
+            if (!Schema::hasColumn('bookings', 'subtotal_amount')) {
+                $table->decimal('subtotal_amount', 12, 2)->default(0)->after('total_amount');
+            }
+            if (!Schema::hasColumn('bookings', 'tax_amount')) {
+                $table->decimal('tax_amount', 12, 2)->default(0)->after('subtotal_amount');
+            }
         });
     }
 
