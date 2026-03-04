@@ -34,6 +34,10 @@
                     Booking
                 </flux:navlist.item>
 
+                <flux:navlist.item icon="clock" href="{{ route('admin.booking-dates') }}" :current="request()->routeIs('admin.booking-dates')">
+                    Kelola Tanggal
+                </flux:navlist.item>
+
                 <flux:navlist.item icon="rectangle-stack" href="{{ route('admin.categories.index') }}" :current="request()->routeIs('admin.categories.*')">
                     Kategori
                 </flux:navlist.item>
